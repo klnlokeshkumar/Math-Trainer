@@ -25,7 +25,7 @@ Each trainer has its own `index.html`, `style.css`, and `script.js`. Reusable st
 - Progressive, easy, medium, hard and mixed difficulty choices.
 - Universal answer format: choose typed input or multiple-choice options; the preference follows the learner across all trainers in the same browser.
 - Shared difficulty, session mode, question count, time limit and per-question target settings carry across all trainers. Square-root/cube-root approximation mode and rounding precision are shared between the two root trainers; other skill-specific settings are remembered for that individual trainer.
-- Correct answers advance immediately; incorrect answers reveal the correct answer for one second.
+- Correct answers appear inline in green; wrong answers appear in red with strikethrough followed by the green correct answer. All answer outcomes remain visible for one second before the next question, including during timed and per-question timeout flows.
 - Session termination checks on time expiry, count completion, pool completion and manual stop.
 - End-of-session question review with entered answer, correct answer, result, response time and explanation where available.
 - Browser-local analytics and trainer preferences in `localStorage`; history can be exported as JSON or cleared from the homepage. Preferences stay in the current browser profile and are not synced to other devices.
@@ -77,17 +77,17 @@ math-practice-hub/
 - Approximate division and optional square-root/cube-root practice have explicit rounding targets to make grading unambiguous.
 - Fraction/decimal inputs use Enter or the Check button because decimal answers can have different lengths. Numeric questions use automatic submission when an expected digit count or explicit decimal precision is known; variable-length free-form answers keep an explicit submission path.
 
-### Answer submission and input validation (v8)
+### Answer submission and input validation
 - Unit-digit multiple-choice questions always show exactly four unique options, all from 0–9, including the correct digit. Distractors prefer the skill-specific common-error candidates, then fill from the remaining digits.
 - Typed integer questions auto-submit when the expected answer digit count is reached; unit digit uses one digit and last-two-digits uses two digits, including a leading zero when appropriate.
 - Decimal questions with a stated precision auto-submit once the requested fractional digits are entered. Exact-decimal and rounded-division answers use their expected representation length when no fixed precision instruction is present. Decimal and numeric-division grading ignores unnecessary trailing zeros.
 - Typed Yes/No and Prime/Composite questions auto-submit when a complete valid answer token is entered. Multiple-select questions and free-form fraction answers keep explicit submission because the system cannot know when a list or fraction is finished. The Enter key remains available as a fallback when a learner wants to submit an answer before reaching the automatic completion boundary.
 - The Check answer button is hidden only for answer formats with a defined auto-submit rule; it stays visible for multi-select and free-form fraction questions.
 
-### Multiple-choice behavior (v7)
+### Multiple-choice behavior and answer reveal
 - Single-answer multiple-choice questions submit as soon as an option is selected; the Check answer button is hidden for these questions.
-- The resolved answer is inserted into the question line and colored green for correct responses or red for incorrect responses. The correct choice is highlighted green, and a wrong selected choice is highlighted red.
-- Multiple-choice single-answer feedback stays visible for one second before the next question. Select-all-that-apply questions retain a Check answer button.
+- The resolved answer is inserted into the question line for every trainer and answer format: correct answers are green; incorrect responses show the submitted answer in red with strikethrough, followed by the green correct answer. Single-choice selections are also highlighted, and select-all questions retain a Check answer button.
+- After every response—including correct, incorrect, and per-question timeout—the reveal remains visible for one second before moving to the next question or showing timed-session results.
 - Numeric distractors are generated from skill-specific error patterns rather than a universal list of arbitrary offsets. The option order is shuffled, choices are deduplicated using the same equivalence rules as grading, and exactly one choice is correct for single-answer items.
 - Tables and multiplication use adjacent-factor mistakes; squares and cubes use nearby powers plus common operation confusions; approximate roots and decimals use rounding/place-value errors; fractions and percentages use scale, reciprocal, numerator/denominator and early-rounding errors; powers' last digits use exponent and modulo mistakes; approximate division uses rounding-direction and divisor-estimation mistakes.
 - Divisibility and prime/composite items remain Yes/No because they have two meaningful categories. Prime hunt remains a select-all item with the full candidate set. These are not forced into four choices by adding low-quality alternatives.
@@ -98,3 +98,9 @@ math-practice-hub/
 - [University of Bath: How to write effective multiple-choice questions](https://teachinghub.bath.ac.uk/guide/writing-effective-multiple-choice-questions/) — recommends plausible, misconception-based, mutually exclusive options without formatting clues.
 - [University of Waterloo: Designing multiple-choice questions](https://uwaterloo.ca/centre-for-teaching-excellence/catalogs/tip-sheets/designing-multiple-choice-questions) — recommends alternatives that are plausible and incorrect, and notes the challenge of adding extra useful distractors.
 - [INFORMS Transactions on Education: Practical guidance for writing multiple-choice test questions](https://pubsonline.informs.org/doi/full/10.1287/ited.2022.0274) — describes using numerical error patterns as distractors to reveal likely mistakes.
+
+## v9 interaction and mixed-mode prompt refinements
+
+- Percentage-to-fraction questions use the compact `55% = ?` format. In mixed direction only, an instructional subtitle such as `Fraction in simplest form?` appears beneath the question; the subtitle is about half the question font size.
+- All trainers and sprint modes now reveal the resolved answer inline after a response: correct answers in green; on incorrect answers, the entered answer appears red and struck through followed immediately by the green correct answer. Suffixes such as `%` are included with both values.
+- Correct, incorrect, and question-timeout resolutions stay visible for one second before the next question or timed-session results. Timed-session expiration is deferred during this reveal interval.

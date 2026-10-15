@@ -53,6 +53,7 @@ function buildOptions(kind){const cfg=configs[kind];const host=$("trainerOptions
 }
 function getOpts(kind){const o={};configs[kind].options.forEach(c=>o[c.id]=optionValue(c.id));if(kind==="table"){o.selectedTables=$("tables")?.value==="custom"?[...$("tableChecks").querySelectorAll("input:checked")].map(i=>+i.value):Array.from({length:20},(_,i)=>i+1)}return o}
 function makeQ(text,answer,extra={}){return {text:String(text),answer:String(answer),kind:"numeric",...extra}}
+function questionSubtext(q){return [q&&q.instruction,q&&q.hint].filter(v=>String(v||"").trim()).map(v=>String(v).trim()).join(" · ")}
 function divRules(n){const rules=[2,3,4,5,6,8,9,10,11,12,25];return rules.filter(d=>n%d===0)}
 function qPool(kind,difficulty,opts){
  const rand=U.rand, shuffle=U.shuffle, q=[];let maxRoot=+opts.maxRoot||50;
@@ -80,7 +81,7 @@ function qPool(kind,difficulty,opts){
   arr.forEach(([n,d])=>{const val=n/d;const answer=mode==="round"?(Math.round((val+Number.EPSILON)*100)/100).toFixed(2):String(Number(val.toFixed(2)));if(mode==="exact"&&Math.abs(val-Math.round(val*100)/100)>1e-9)return;const prompt=`${n}/${d} = ?`;const hint=mode==="round"?"(2 Decimals)":"(Exact Decimal)";const expanded=val.toFixed(6).replace(/0+$/,"").replace(/\.$/,"");add(prompt,answer,{kind:"decimal",hint,explain:`${n} ÷ ${d} = ${expanded}${mode==="round"?`; rounded to 2 decimal places: ${answer}`:""}.`})});
  } else if(kind==="percent"){
   const dir=opts.direction;const fracs=[[1,2],[1,3],[1,4],[1,5],[1,6],[1,8],[1,10],[1,12],[1,16],[3,4],[2,5],[3,5],[7,8],[3,8],[5,8],[7,20],[9,20],[11,20],[13,20],[17,20],[1,25],[3,25],[7,25],[9,25]];
-  fracs.forEach(([n,d])=>{const s=U.simplify(n,d),pct=n/d*100,shownPct=Number(pct.toFixed(4)),hasExactDisplay=Math.abs(pct-shownPct)<1e-9;if(dir!=="toPercent"&&hasExactDisplay)add(`${shownPct}% = fraction in simplest form?`,s.text,{kind:"fraction",explain:`${shownPct}% = ${shownPct}/100 = ${s.text}`});if(dir!=="toFraction")add(`${s.text} = ?%`,shownPct,{kind:"decimal",hint:hasExactDisplay?"":"(Round to 4 Decimals)",explain:`${s.text} × 100 = ${pct.toFixed(6).replace(/0+$/,'').replace(/\.$/,'')}%; ${hasExactDisplay?"":"rounded to 4 decimal places: "+shownPct}`})});
+  fracs.forEach(([n,d])=>{const s=U.simplify(n,d),pct=n/d*100,shownPct=Number(pct.toFixed(4)),hasExactDisplay=Math.abs(pct-shownPct)<1e-9;if(dir!=="toPercent"&&hasExactDisplay)add(`${shownPct}% = ?`,s.text,{kind:"fraction",instruction:dir==="mixed"?"Fraction in simplest form?":"",explain:`${shownPct}% = ${shownPct}/100 = ${s.text}`});if(dir!=="toFraction")add(`${s.text} = ?%`,shownPct,{kind:"decimal",hint:hasExactDisplay?"":"(Round to 4 Decimals)",explain:`${s.text} × 100 = ${pct.toFixed(6).replace(/0+$/,'').replace(/\.$/,'')}%; ${hasExactDisplay?"":"rounded to 4 decimal places: "+shownPct}`})});
  } else if(kind==="divisibility"){
   const ds=opts.divisorSet==="core"?[2,3,5,9,10]:[2,3,4,5,6,8,9,10,11,12,25];const type=opts.questionType;
   for(let n=100;n<=9999;n+=rand(1,7)){const d=ds[rand(0,ds.length-1)],yes=n%d===0;if(type==="multiple"){const valid=divRules(n).filter(x=>ds.includes(x));add(`Select all rules that divide ${n}`,valid.join(","),{kind:"multi",options:ds.map(String),explain:`Divisors in this rule set: ${valid.join(", ")||"none"}`})}else add(`Is ${n} divisible by ${d}?`,yes?"Yes":"No",{kind:"choice",options:["Yes","No"],explain:yes?`${n} ÷ ${d} is an integer.`:`${n} is not divisible by ${d}.`})}
@@ -307,7 +308,7 @@ function autoInputIsComplete(q,plan,value){
 }
 function shouldHideSubmit(q,optionsMode){return optionsMode?q.kind!=="multi":!!q.autoInputPlan}
 function inputFor(q){
- const host=$("answerControl"),optionsMode=$("answerMode")?.value==="options";host.innerHTML="";
+ const host=$("answerControl"),optionsMode=$("answerMode")?.value==="options";host.classList.remove("hidden");host.innerHTML="";
  const form=$("answerForm");form.classList.toggle("wide-answer",optionsMode&&q.kind==="multi");
  const submitBtn=$("submitBtn");submitBtn.disabled=false;submitBtn.textContent="Check answer";let displayOptions=[];
  if(optionsMode){
@@ -340,18 +341,16 @@ function renderResolvedQuestion(q, shownAnswer, isCorrect, isTimeout=false){
  const before=idx>=0?source.slice(0,idx):source;const after=idx>=0?source.slice(idx+1):"";
  const equationPlaceholder=idx>=0&&(/=\s*$/.test(before));
  const addAnswer=(value,className,del=false)=>{const span=document.createElement("span");span.className=className;span.textContent=String(value);if(del)span.style.textDecoration="line-through";node.appendChild(span)};
+ const wrongValue=String(shownAnswer??"").trim()||"No answer";
  if(equationPlaceholder){
   node.appendChild(document.createTextNode(before));
-  if(!isCorrect&&!isTimeout){addAnswer(shownAnswer,"answer-reveal-bad",true);node.appendChild(document.createTextNode(" "));}
-  addAnswer(q.answer,"answer-reveal-good");
-  if(after)node.appendChild(document.createTextNode(after));
+  if(!isCorrect&&!isTimeout){addAnswer(wrongValue+after,"answer-reveal-bad",true);node.appendChild(document.createTextNode(" "));}
+  addAnswer(String(q.answer??"")+(String(q.answer??"").trim()?after:""),"answer-reveal-good");
  }else{
-  const prompt=idx>=0?source.slice(0,idx).trimEnd():source;
-  if(prompt)node.appendChild(document.createTextNode(prompt));
-  if(prompt)node.appendChild(document.createTextNode(" — "));
-  if(!isCorrect&&!isTimeout){addAnswer(shownAnswer,"answer-reveal-bad",true);node.appendChild(document.createTextNode(" "));}
-  addAnswer(q.answer,"answer-reveal-good");
-  if(after)node.appendChild(document.createTextNode(after));
+  node.appendChild(document.createTextNode(source));
+  node.appendChild(document.createTextNode(" — "));
+  if(!isCorrect&&!isTimeout){addAnswer(wrongValue,"answer-reveal-bad",true);node.appendChild(document.createTextNode(" "));}
+  addAnswer(String(q.answer??"").trim()||"None","answer-reveal-good");
  }
 }
 function compareAnswer(q,raw){
@@ -404,10 +403,10 @@ function start(overridePool=null){
  app.target=app.sessionMode==="count"?Math.max(1,Math.min(10000,intOpt("questionCount",30,1,10000))):app.pool.length;
  app.timeLimit=app.sessionMode==="timed"?Math.max(15000,Math.min(10800000,Number($("duration").value||2)*60000)):0;
  if(app.sessionMode==="timed")app.deadline=Date.now()+app.timeLimit;else app.deadline=0;
- $("resultsArea").classList.add("hidden");$("questionArea").classList.remove("hidden");$("endBtn").disabled=false;$("startBtn").textContent="Restart sprint ↻";$("feedback").className="feedback neutral";$("feedback").textContent="";$("sessionNote").textContent=app.sessionMode==="all"?"Unique question pool: every generated question appears once.":"Correct advances immediately; wrong answers show the answer for 1 second.";
+ $("resultsArea").classList.add("hidden");$("questionArea").classList.remove("hidden");$("endBtn").disabled=false;$("startBtn").textContent="Restart sprint ↻";$("feedback").className="feedback neutral";$("feedback").textContent="";$("sessionNote").textContent=app.sessionMode==="all"?"Unique question pool: every generated question appears once.":"Correct and incorrect answers stay visible for 1 second before the next question.";
  $("practicePanel").scrollIntoView({behavior:"smooth",block:"start"});if(app.sessionMode==="timed"){updateClock();app.clock=setInterval(updateClock,200)}showQuestion();
 }
-function updateClock(){if(!app.running)return;const left=app.deadline-Date.now();$("timerStat").textContent=U.formatTime(left);if(left<=0)finish("time");}
+function updateClock(){if(!app||!app.running)return;const left=app.deadline-Date.now();$("timerStat").textContent=U.formatTime(left);if(left<=0&&!app.locked)finish("time");}
 function showQuestion(){
  if(!app.running)return;if(app.sessionMode==="timed"&&Date.now()>=app.deadline){finish("time");return}
  const max=app.sessionMode==="count"?app.target:app.sessionMode==="all"?app.pool.length:Infinity;
@@ -418,29 +417,38 @@ function showQuestion(){
  }
  app.current=app.pool[app.index % app.pool.length];app.locked=false;app.qStarted=Date.now();
  app.current.autoInputPlan=createAutoInputPlan(app.current);
- $("questionType").textContent=app.cfg.title.toUpperCase();$("questionText").textContent=app.current.text;$("questionHint").textContent=app.current.hint||"";$("feedback").className="feedback neutral";$("feedback").textContent="";$("targetHint").textContent=Number($("perQuestion").value)>0?`Target: ${$("perQuestion").value} seconds per question`:"";
+ $("questionType").textContent=app.cfg.title.toUpperCase();$("questionText").textContent=app.current.text;$("questionHint").textContent=questionSubtext(app.current);$("questionHint").classList.toggle("hidden",!questionSubtext(app.current));$("feedback").className="feedback neutral";$("feedback").textContent="";$("targetHint").textContent=Number($("perQuestion").value)>0?`Target: ${$("perQuestion").value} seconds per question`:"";
  inputFor(app.current);updateStats();
  if(Number($("perQuestion").value)>0){const cap=Math.max(1,Number($("perQuestion").value))*1000;app.qTimer=setTimeout(()=>{if(app.running&&!app.locked){recordAnswer("",true,"timeout")}},cap)}
 }
 function submitCurrent(){if(!app||!app.running||app.locked||!app.current)return;const el=$("answerInput");const raw=el?el.value.trim():"";if(!raw&&app.current.kind!=="multi"){ $("feedback").className="feedback neutral";$("feedback").textContent="Enter or select an answer first.";return }recordAnswer(raw,false)}
 function recordAnswer(raw,timeout=false,forcedStatus=null){
- if(!app.running||app.locked)return;app.locked=true;clearTimeout(app.qTimer);const elapsed=Date.now()-app.qStarted;const q=app.current;const correct=!timeout&&compareAnswer(q,raw);const status=forcedStatus||(timeout?"unanswered":correct?"correct":"wrong");
- const optionsMode=$("answerMode")?.value==="options";const autoSingleChoice=optionsMode&&q.kind!=="multi";
- const rec={q,question:q.text,hint:q.hint||"",userAnswer:raw,correctAnswer:q.answer,status,correct,elapsedMs:elapsed,explanation:q.explain||""};app.records.push(rec);if(correct){app.streak++;app.bestStreak=Math.max(app.bestStreak,app.streak)}else app.streak=0;
- if(autoSingleChoice){
-  renderResolvedQuestion(q,timeout?q.answer:raw,correct,timeout);
-  $("answerControl").querySelectorAll("[data-choice]").forEach(b=>{
-   const isRight=compareAnswer(q,b.dataset.choice);const isSelected=!timeout&&b.dataset.choice===String(raw);
-   if(isRight)b.classList.add("correct-option");if(isSelected&&!correct)b.classList.add("wrong-option");
-  });
- }
- if(timeout){$("feedback").className="feedback bad";$("feedback").textContent=`Time target reached. Correct answer: ${q.answer}.`}
- else if(correct){$("feedback").className="feedback good";$("feedback").textContent="✓ Correct!";}else{$("feedback").className="feedback bad";$("feedback").textContent=`Not quite — correct answer: ${q.answer}${q.explain?" · "+q.explain:""}`}
- $("answerControl").querySelectorAll("input,button").forEach(el=>el.disabled=true);$("submitBtn").disabled=true;updateStats();
+ if(!app.running||app.locked)return;app.locked=true;clearTimeout(app.qTimer);const elapsed=Date.now()-app.qStarted;const q=app.current;const correct=!timeout&&compareAnswer(q,raw);const status=timeout?"unanswered":(forcedStatus||(correct?"correct":"wrong"));
+ const optionsMode=$("answerMode")?.value==="options";
+ const rec={q,question:q.text,hint:questionSubtext(q),userAnswer:raw,correctAnswer:q.answer,status,correct,elapsedMs:elapsed,explanation:q.explain||""};app.records.push(rec);if(correct){app.streak++;app.bestStreak=Math.max(app.bestStreak,app.streak)}else app.streak=0;
+ // Resolve every question inline, regardless of trainer, answer format, or sprint mode.
+ renderResolvedQuestion(q,timeout?"":raw,correct,timeout);
+ if(optionsMode){
+  if(q.kind==="multi"){
+   const expected=new Set(String(q.answer||"").split(/[,;\s]+/).filter(Boolean));
+   $("answerControl").querySelectorAll("[data-multi]").forEach(b=>{
+    const v=String(b.dataset.multi);const isRight=expected.has(v);const isSelected=!timeout&&String(raw||"").split(/[,;\s]+/).filter(Boolean).includes(v);
+    if(isRight)b.classList.add("correct-option");if(isSelected&&!isRight)b.classList.add("wrong-option");
+   });
+  }else{
+   $("answerControl").querySelectorAll("[data-choice]").forEach(b=>{
+    const isRight=compareAnswer(q,b.dataset.choice);const isSelected=!timeout&&b.dataset.choice===String(raw);
+    if(isRight)b.classList.add("correct-option");if(isSelected&&!correct)b.classList.add("wrong-option");
+   });
+  }
+ }else $("answerControl").classList.add("hidden");
+ if(timeout){$("feedback").className="feedback bad";$("feedback").textContent="Time target reached."}
+ else if(correct){$("feedback").className="feedback good";$("feedback").textContent="✓ Correct!";}
+ else{$("feedback").className="feedback bad";$("feedback").textContent=`Not quite.${q.explain?" "+q.explain:""}`}
+ $("answerControl").querySelectorAll("input,button").forEach(el=>el.disabled=true);$("submitBtn").disabled=true;$("submitBtn").classList.add("hidden");updateStats();
  app.index++;
- const delay=autoSingleChoice?1000:(correct?0:1000);
- if(app.sessionMode==="timed"&&Date.now()>=app.deadline){finish("time");return}
- if(delay===0){showQuestion()}else app.qTimer=setTimeout(()=>{if(!app.running)return;if(app.sessionMode==="timed"&&Date.now()>=app.deadline){finish("time");return}showQuestion()},delay);
+ // Always leave the resolved answer visible for one full second, including correct answers.
+ app.qTimer=setTimeout(()=>{if(!app.running)return;if(app.sessionMode==="timed"&&Date.now()>=app.deadline){finish("time");return}showQuestion()},1000);
 }
 function updateStats(){
  const done=app.records.length;const correct=app.records.filter(r=>r.status==="correct").length;const denominator=app.sessionMode==="count"?app.target:app.sessionMode==="all"?app.pool.length:Math.max(done+1,1);
@@ -451,7 +459,7 @@ function updateStats(){
 function finish(reason){
  if(!app||!app.running)return;
  if((reason==="time"||reason==="ended")&&app.current&&!app.locked){
-  app.records.push({q:app.current,question:app.current.text,userAnswer:"",correctAnswer:app.current.answer,status:"unanswered",correct:false,elapsedMs:Math.max(0,Date.now()-app.qStarted),explanation:app.current.explain||""});
+  app.records.push({q:app.current,question:app.current.text,hint:questionSubtext(app.current),userAnswer:"",correctAnswer:app.current.answer,status:"unanswered",correct:false,elapsedMs:Math.max(0,Date.now()-app.qStarted),explanation:app.current.explain||""});
  }
  app.running=false;app.locked=true;clearInterval(app.clock);clearTimeout(app.qTimer);$("endBtn").disabled=true;
  // Ensure no next question can be shown after a timer/finish event.
