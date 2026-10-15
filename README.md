@@ -6,9 +6,9 @@ A static, GitHub Pages-ready practice site for SSC CGL and other competitive-exa
 
 1. Tables 20 × 20 (multiplication/division, custom tables and factor limits)
 2. Two-digit multiplication
-3. Squares and square roots
-4. Cubes and cube roots
-5. Fractions to decimals (exact values up to two decimal places or rounding to two places)
+3. Squares and square roots (optional estimates for non-perfect squares, rounded to 1–3 decimal places)
+4. Cubes and cube roots (optional estimates for non-perfect cubes, rounded to 1–3 decimal places)
+5. Fractions to decimals (exact decimals up to two places, or include non-terminating values rounded to two places)
 6. Percentages ↔ fractions
 7. Divisibility rules
 8. Unit digit and last two digits of powers
@@ -72,5 +72,5 @@ math-practice-hub/
 
 - “All possibilities once” uses the finite generated pool for the selected trainer options.
 - Timed sessions recycle a shuffled pool only after exhausting it; count-limited and all-once sessions do not intentionally repeat a question before the pool is exhausted.
-- Approximate division has an explicit rounding target to make grading unambiguous.
+- Approximate division and optional square-root/cube-root practice have explicit rounding targets to make grading unambiguous.
 - Fraction/decimal inputs use Enter or the Check button because decimal answers can have different lengths. Numeric questions use automatic submission only when a safe integer digit count is known.
