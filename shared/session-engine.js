@@ -2,6 +2,7 @@
 (function(global){
 "use strict";
 const U=global.MathUtils, STORAGE_KEY="mathSprintHistoryV1";
+const SHARED_PREFS_KEY="mathSprintSharedPrefsV1", TRAINER_PREFS_KEY="mathSprintTrainerPrefsV1";
 const $=id=>document.getElementById(id);
 const configs={
  table:{title:"Tables 20 × 20",kind:"numeric",auto:true,options:[
@@ -30,15 +31,25 @@ const configs={
  primehunt:{title:"Prime hunt: 1–200",kind:"choice",auto:false,options:[{id:"gridSize",label:"Numbers per round",type:"select",choices:[["20","20 numbers"],["50","50 numbers"],["200","Full 1–200 grid"]],value:"20"}]},
  primetest:{title:"Prime or composite?",kind:"choice",auto:false,options:[{id:"numberMax",label:"Maximum number",type:"select",choices:[["100","Up to 100"],["200","Up to 200"],["500","Up to 500"],["1000","Up to 1000"]],value:"200"}]}
 };
+function readStoredObject(key){try{const value=JSON.parse(localStorage.getItem(key)||"{}");return value&&typeof value==="object"&&!Array.isArray(value)?value:{}}catch(e){return {}}}
+function writeStoredObject(key,value){try{localStorage.setItem(key,JSON.stringify(value))}catch(e){}}
 function loadHistory(){try{const v=JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]");return Array.isArray(v)?v:[]}catch(e){return []}}
 function saveHistory(v){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(v.slice(-500)))}catch(e){}}
 function optionValue(id){const el=$(id);return el?el.value:null}
+function setStoredControl(id,value){const el=$(id);if(!el||value===undefined||value===null||value==="")return;if(el.tagName==="SELECT"){if([...el.options].some(o=>o.value===String(value)))el.value=String(value);return;}if(el.type==="number"){const n=Number(value),min=el.min===""?-Infinity:Number(el.min),max=el.max===""?Infinity:Number(el.max);if(Number.isFinite(n)&&n>=min&&n<=max)el.value=String(value);return;}el.value=String(value)}
+function loadSharedPrefs(){return readStoredObject(SHARED_PREFS_KEY)}
+function applySharedPrefs(kind){const prefs=loadSharedPrefs();if(!Object.prototype.hasOwnProperty.call(prefs,"answerMode")){const defaults={table:"input",multiply2:"input",squares:"input",cubes:"input",fracdec:"input",percent:"input",divisibility:"options",lastdigits:"input",approxdiv:"options",primehunt:"options",primetest:"options"};setStoredControl("answerMode",defaults[kind]||"input");}["answerMode","difficulty","sessionMode","questionCount","duration","perQuestion"].forEach(id=>setStoredControl(id,prefs[id]));}
+function saveSharedPrefs(){const prefs=loadSharedPrefs();["answerMode","difficulty","sessionMode","questionCount","duration","perQuestion"].forEach(id=>{const el=$(id);if(el&&el.value!=="")prefs[id]=el.value;});if($("rootMode"))prefs.rootMode=$("rootMode").value;if($("rootPrecision"))prefs.rootPrecision=$("rootPrecision").value;if(app&&(app.kind==="squares"||app.kind==="cubes")&&$("direction")){const direction=$("direction").value;prefs.rootQuestionType=direction==="mixed"?"mixed":direction==="root"?"root":"power";}writeStoredObject(SHARED_PREFS_KEY,prefs)}
+function loadTrainerPrefs(){return readStoredObject(TRAINER_PREFS_KEY)}
+function saveTrainerPrefs(kind){const all=loadTrainerPrefs(),prefs={...(all[kind]||{})};(configs[kind]?.options||[]).forEach(o=>{const el=$(o.id);if(el&&el.value!=="")prefs[o.id]=el.value;});if(kind==="table"&&$("tableChecks"))prefs.selectedTables=[...$("tableChecks").querySelectorAll("input:checked")].map(el=>+el.value);all[kind]=prefs;writeStoredObject(TRAINER_PREFS_KEY,all)}
+function bindSharedPrefs(){["answerMode","difficulty","sessionMode","questionCount","duration","perQuestion"].forEach(id=>{const el=$(id);if(!el)return;el.addEventListener("change",saveSharedPrefs);if(el.type==="number")el.addEventListener("input",saveSharedPrefs);});}
 function intOpt(id,def,min=1,max=100000){const v=parseInt(optionValue(id),10);return Number.isFinite(v)?Math.min(max,Math.max(min,v)):def}
 function selectOption(label,choices,value,attrs=""){return `<label ${attrs}>${U.esc(label)}<select data-option="${U.esc(value.id)}" id="${U.esc(value.id)}">${value.choices.map(c=>`<option value="${U.esc(c[0])}" ${c[0]===value.value?"selected":""}>${U.esc(c[1])}</option>`).join("")}</select></label>`}
 function updateConditionalOptions(host){host.querySelectorAll("[data-show-when]").forEach(label=>{let conditions=[];try{conditions=JSON.parse(label.dataset.showWhen||"[]")}catch(e){}const visible=conditions.every(c=>{const val=optionValue(c.id);return c.notValue!==undefined?val!==c.notValue:val===c.value});label.classList.toggle("hidden",!visible)})}
-function buildOptions(kind){const cfg=configs[kind];const host=$("trainerOptions");host.innerHTML="";cfg.options.forEach(o=>{let el;const attrs=o.showWhen?`data-show-when='${U.esc(JSON.stringify(o.showWhen))}'`:"";if(o.type==="select")el=selectOption(o.label,o.choices,o,attrs);else el=`<label ${attrs}>${U.esc(o.label)}<input data-option="${o.id}" id="${o.id}" type="number" min="${o.min}" max="${o.max}" value="${o.value}"></label>`;host.insertAdjacentHTML("beforeend",el)});
- host.querySelectorAll("select").forEach(el=>el.addEventListener("change",()=>updateConditionalOptions(host)));updateConditionalOptions(host);
- if(kind==="table"){const box=document.createElement("div");box.className="option-group";box.id="tableChecks";box.style.gridColumn="1/-1";box.innerHTML=Array.from({length:20},(_,i)=>`<label><input type="checkbox" value="${i+1}" ${i>=1&&i<=9?"checked":""}>${i+1}</label>`).join("");host.append(box);const mode=$("tables");const update=()=>box.classList.toggle("hidden",mode.value!=="custom");mode.addEventListener("change",update);update();}
+function buildOptions(kind){const cfg=configs[kind];const host=$("trainerOptions");const stored=(loadTrainerPrefs()[kind]||{}),shared=loadSharedPrefs();host.innerHTML="";cfg.options.forEach(base=>{const o={...base};if(Object.prototype.hasOwnProperty.call(stored,o.id))o.value=stored[o.id];if((o.id==="rootMode"||o.id==="rootPrecision")&&Object.prototype.hasOwnProperty.call(shared,o.id))o.value=shared[o.id];if(o.id==="direction"&&Object.prototype.hasOwnProperty.call(shared,"rootQuestionType")){o.value=shared.rootQuestionType==="mixed"?"mixed":shared.rootQuestionType==="root"?"root":(kind==="squares"?"square":"cube");}let el;const attrs=o.showWhen?`data-show-when='${U.esc(JSON.stringify(o.showWhen))}'`:"";if(o.type==="select")el=selectOption(o.label,o.choices,o,attrs);else el=`<label ${attrs}>${U.esc(o.label)}<input data-option="${U.esc(o.id)}" id="${U.esc(o.id)}" type="number" min="${o.min}" max="${o.max}" value="${U.esc(o.value)}"></label>`;host.insertAdjacentHTML("beforeend",el)});
+ host.querySelectorAll("select").forEach(el=>el.addEventListener("change",()=>{updateConditionalOptions(host);saveTrainerPrefs(kind);if(el.id==="rootMode"||el.id==="rootPrecision"||el.id==="direction")saveSharedPrefs()}));
+ host.querySelectorAll('input[data-option]').forEach(el=>{el.addEventListener("change",()=>saveTrainerPrefs(kind));el.addEventListener("input",()=>saveTrainerPrefs(kind));});updateConditionalOptions(host);
+ if(kind==="table"){const box=document.createElement("div");box.className="option-group";box.id="tableChecks";box.style.gridColumn="1/-1";const savedTables=stored.selectedTables;box.innerHTML=Array.from({length:20},(_,i)=>{const value=i+1,checked=Array.isArray(savedTables)?savedTables.includes(value):(i>=1&&i<=9);return `<label><input type="checkbox" value="${value}" ${checked?"checked":""}>${value}</label>`}).join("");host.append(box);const mode=$("tables");const update=()=>box.classList.toggle("hidden",mode.value!=="custom");mode.addEventListener("change",()=>{update();saveTrainerPrefs(kind)});box.querySelectorAll('input[type="checkbox"]').forEach(el=>el.addEventListener("change",()=>saveTrainerPrefs(kind)));update();}
 }
 function getOpts(kind){const o={};configs[kind].options.forEach(c=>o[c.id]=optionValue(c.id));if(kind==="table"){o.selectedTables=$("tables")?.value==="custom"?[...$("tableChecks").querySelectorAll("input:checked")].map(i=>+i.value):Array.from({length:20},(_,i)=>i+1)}return o}
 function makeQ(text,answer,extra={}){return {text:String(text),answer:String(answer),kind:"numeric",...extra}}
@@ -101,26 +112,90 @@ function qPool(kind,difficulty,opts){
  if(difficulty==="hard")filtered=tagged.filter(x=>x.level==="hard");
  return shuffle(filtered);
 }
-function inputFor(q){
- const host=$("answerControl");host.innerHTML="";$("submitBtn").classList.remove("hidden");
- if(q.kind==="choice"){
-  host.innerHTML=`<div class="answer-options">${q.options.map((v,i)=>`<button type="button" data-choice="${U.esc(v)}">${U.esc(v)}</button>`).join("")}</div><input type="hidden" id="answerInput" value="">`;
-  host.querySelectorAll("[data-choice]").forEach(b=>b.addEventListener("click",()=>{host.querySelectorAll("[data-choice]").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");$("answerInput").value=b.dataset.choice;if(q.options.length===2)submitCurrent()}));
- } else if(q.kind==="multi"){
-  host.innerHTML=`<div class="answer-options">${q.options.map(v=>`<button type="button" data-multi="${U.esc(v)}" aria-pressed="false">${U.esc(v)}</button>`).join("")}</div><p class="muted tiny">Select all that apply, then press Check answer.</p><input type="hidden" id="answerInput" value="">`;
-  const selected=new Set();host.querySelectorAll("[data-multi]").forEach(b=>b.addEventListener("click",()=>{const v=b.dataset.multi;if(selected.has(v)){selected.delete(v);b.classList.remove("selected");b.setAttribute("aria-pressed","false")}else{selected.add(v);b.classList.add("selected");b.setAttribute("aria-pressed","true")}$("answerInput").value=[...selected].sort((a,b)=>+a-+b).join(",")}));
- } else {
-  host.innerHTML=`<input id="answerInput" class="answer-input" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${q.kind==="fraction"?"e.g. 3/8":q.kind==="decimal"?"Enter decimal":"Your answer"}" aria-label="Your answer">`;
+function choiceEquivalent(q,a,b){
+ const x=String(a).trim(),y=String(b).trim();
+ if(q.kind==="fraction")return U.equivalentFraction(x,y);
+ if(q.kind==="decimal")return U.sameDecimal(x,y);
+ if(q.kind==="last2")return Number(x)===Number(y);
+ if(q.kind==="choice")return x.toLowerCase()===y.toLowerCase();
+ return x===y;
+}
+function generatedOptions(q){
+ if(Array.isArray(q.options)&&q.options.length)return U.shuffle(q.options.map(String));
+ const correct=String(q.answer),values=[correct];
+ const push=v=>{if(v===null||v===undefined||!String(v).trim())return;const text=String(v);if(!values.some(existing=>choiceEquivalent(q,existing,text)))values.push(text)};
+ if(q.kind==="fraction"){
+  const match=correct.match(/^(-?\d+)\/(\d+)$/);
+  if(match){const n=Number(match[1]),d=Number(match[2]);[U.simplify(n+1,d).text,U.simplify(Math.max(0,n-1),d).text,U.simplify(n,d+1).text,U.simplify(n+1,d+1).text,U.simplify(n+2,d).text,U.simplify(n,d+2).text].forEach(push);}
+  ["1/2","1/3","1/4","2/3","3/4","1/5","2/5","3/5","4/5","1/8"].forEach(push);
+ }else{
+  const number=Number(correct);
+  if(Number.isFinite(number)){
+   const isDecimal=q.kind==="decimal",isLastTwo=q.kind==="last2";
+   const decimalPlaces=isDecimal?(correct.split(".")[1]||"").length:0;
+   const unit=isDecimal?Math.pow(10,-Math.max(1,decimalPlaces)):1;
+   let deltas;
+   if(isLastTwo)deltas=[1,-1,2,-2,5,-5,10,-10,20,-20,25,-25];
+   else if(isDecimal)deltas=[unit,-unit,2*unit,-2*unit,5*unit,-5*unit,10*unit,-10*unit,0.1,-0.1,1,-1];
+   else {const magnitude=Math.pow(10,Math.max(0,String(Math.trunc(Math.abs(number))).length-2));deltas=[1,-1,2,-2,10,-10,magnitude,-magnitude,3,-3,100,-100];}
+   deltas.forEach(delta=>{let candidate=number+delta;if(isLastTwo)candidate=((Math.round(candidate)%100)+100)%100;else if(!isDecimal)candidate=Math.round(candidate);if(candidate<0&&number>=0)return;let text=isDecimal?candidate.toFixed(Math.min(6,Math.max(1,decimalPlaces))):isLastTwo?String(Math.round(candidate)).padStart(2,"0"):String(Math.round(candidate));push(text)});
+  }
  }
- const input=$("answerInput");if(input&&input.type!=="hidden"){input.addEventListener("input",()=>{if(q.kind==="numeric"&&/^-?\d+$/.test(input.value)&&q.autoDigits&&input.value.length>=String(q.answer).length)submitCurrent();});input.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();submitCurrent()}});if(q.kind==="numeric"&&q.autoDigits){input.dataset.autosubmit="true"}input.focus({preventScroll:true})}
- $("submitBtn").textContent=q.kind==="choice"&&q.options.length===2?"Check answer":"Check answer";
- $("submitBtn").classList.toggle("hidden",q.kind==="choice"&&q.options.length===2);
+ // Add a few distant candidates as a fallback for answers with a narrow number range.
+ if(values.length<4&&Number.isFinite(Number(correct))){const n=Number(correct);for(let k=3;values.length<4&&k<100;k++){const v=q.kind==="decimal"?n+k/100:n+k;if(v>=0)push(q.kind==="decimal"?v.toFixed(Math.min(6,Math.max(1,(correct.split(".")[1]||"").length))):q.kind==="last2"?String(Math.round(v)%100).padStart(2,"0"):String(Math.round(v)));}}
+ return U.shuffle(values.slice(0,4));
+}
+function inputFor(q){
+ const host=$("answerControl"),optionsMode=$("answerMode")?.value==="options";host.innerHTML="";
+ const form=$("answerForm");form.classList.toggle("wide-answer",optionsMode&&q.kind==="multi");
+ const submitBtn=$("submitBtn");submitBtn.disabled=false;submitBtn.textContent="Check answer";let displayOptions=[];
+ if(optionsMode){
+  displayOptions=generatedOptions(q);
+  if(q.kind==="multi"){
+   host.innerHTML=`<div class="answer-options multi-options">${displayOptions.map(v=>`<button type="button" data-multi="${U.esc(v)}" aria-pressed="false">${U.esc(v)}</button>`).join("")}</div><p class="muted tiny">Select all that apply, then press Check answer.</p><input type="hidden" id="answerInput" value="">`;
+   const selected=new Set();host.querySelectorAll("[data-multi]").forEach(b=>b.addEventListener("click",()=>{const v=b.dataset.multi;if(selected.has(v)){selected.delete(v);b.classList.remove("selected");b.setAttribute("aria-pressed","false")}else{selected.add(v);b.classList.add("selected");b.setAttribute("aria-pressed","true")}$("answerInput").value=[...selected].sort((a,b)=>Number(a)-Number(b)).join(",")}));
+  }else{
+   host.innerHTML=`<div class="answer-options">${displayOptions.map(v=>`<button type="button" data-choice="${U.esc(v)}">${U.esc(v)}</button>`).join("")}</div><input type="hidden" id="answerInput" value="">`;
+   host.querySelectorAll("[data-choice]").forEach(b=>b.addEventListener("click",()=>{
+    if(app&&app.locked)return;
+    host.querySelectorAll("[data-choice]").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");$("answerInput").value=b.dataset.choice;
+    submitCurrent();
+   }));
+  }
+ }else{
+  const placeholder=q.kind==="fraction"?"e.g. 3/8":q.kind==="multi"?"e.g. 2, 3, 5":q.kind==="decimal"?"Enter decimal":q.kind==="choice"?"Type your answer":"Your answer";
+  const inputMode=(q.kind==="fraction"||q.kind==="multi"||q.kind==="choice")?"text":"decimal";
+  host.innerHTML=`${q.kind==="multi"?'<p class="muted tiny">Enter all answers separated by commas (or leave blank if none apply).</p>':""}<input id="answerInput" class="answer-input" type="text" inputmode="${inputMode}" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${U.esc(placeholder)}" aria-label="Your answer">`;
+ }
+ const input=$("answerInput");if(input&&input.type!=="hidden"){input.addEventListener("input",()=>{if(q.kind==="numeric"&&/^-?\d+$/.test(input.value)&&q.autoDigits&&$("answerMode")?.value!=="options"&&input.value.length>=String(q.answer).length)submitCurrent()});input.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();submitCurrent()}});if(q.kind==="numeric"&&q.autoDigits&&$("answerMode")?.value!=="options")input.dataset.autosubmit="true";input.focus({preventScroll:true})}
+ // Single-answer multiple choice submits on selection; multi-select still requires an explicit check.
+ submitBtn.classList.toggle("hidden",optionsMode&&q.kind!=="multi");
+}
+function renderResolvedQuestion(q, shownAnswer, isCorrect, isTimeout=false){
+ const node=$("questionText");if(!node)return;node.textContent="";
+ const source=String(q.text||"");const idx=source.lastIndexOf("?");
+ const before=idx>=0?source.slice(0,idx):source;const after=idx>=0?source.slice(idx+1):"";
+ const equationPlaceholder=idx>=0&&(/=\s*$/.test(before));
+ const addAnswer=(value,className,del=false)=>{const span=document.createElement("span");span.className=className;span.textContent=String(value);if(del)span.style.textDecoration="line-through";node.appendChild(span)};
+ if(equationPlaceholder){
+  node.appendChild(document.createTextNode(before));
+  if(!isCorrect&&!isTimeout){addAnswer(shownAnswer,"answer-reveal-bad",true);node.appendChild(document.createTextNode(" "));}
+  addAnswer(q.answer,"answer-reveal-good");
+  if(after)node.appendChild(document.createTextNode(after));
+ }else{
+  const prompt=idx>=0?source.slice(0,idx).trimEnd():source;
+  if(prompt)node.appendChild(document.createTextNode(prompt));
+  if(prompt)node.appendChild(document.createTextNode(" — "));
+  if(!isCorrect&&!isTimeout){addAnswer(shownAnswer,"answer-reveal-bad",true);node.appendChild(document.createTextNode(" "));}
+  addAnswer(q.answer,"answer-reveal-good");
+  if(after)node.appendChild(document.createTextNode(after));
+ }
 }
 function compareAnswer(q,raw){
- if(q.kind==="multi"){const a=String(raw||"").split(",").filter(Boolean).map(String).sort((a,b)=>+a-+b);const e=String(q.answer||"").split(",").filter(Boolean).map(String).sort((a,b)=>+a-+b);return a.length===e.length&&a.every((v,i)=>v===e[i])}
+ if(q.kind==="multi"){const normalize=value=>String(value||"").trim().toLowerCase()==="none"?[]:String(value||"").split(/[,;\s]+/).filter(Boolean).map(v=>v.trim()).sort((a,b)=>Number(a)-Number(b));const a=normalize(raw),e=normalize(q.answer);return a.length===e.length&&a.every((v,i)=>v===e[i])}
  if(q.kind==="fraction")return U.equivalentFraction(raw,q.answer);
  if(q.kind==="decimal")return U.sameDecimal(raw,q.answer);
- if(q.kind==="last2")return String(raw).trim().replace(/^0+/,"")===String(q.answer).replace(/^0+/,"");
+ if(q.kind==="last2"){const normalize=value=>{const text=String(value).trim();return /^\d+$/.test(text)?String(Number(text)):text.replace(/^0+(?=\d)/,"")};return normalize(raw)===normalize(q.answer)}
  if(q.kind==="choice")return String(raw).trim().toLowerCase()===String(q.answer).trim().toLowerCase();
  if(q.kind==="numeric")return String(raw).trim()===String(q.answer);
  return String(raw).trim()===String(q.answer);
@@ -128,9 +203,11 @@ function compareAnswer(q,raw){
 let app=null;
 function mount(kind){
  const cfg=configs[kind];if(!cfg)return;app={kind,cfg,opts:null,pool:[],index:0,records:[],current:null,running:false,locked:false,deadline:0,qStarted:0,qTimer:null,clock:null,sessionStarted:0,target:0,sessionMode:"count",timeLimit:0,wrongOnly:null,streak:0,bestStreak:0};
- buildOptions(kind);
+ applySharedPrefs(kind);bindSharedPrefs();buildOptions(kind);
  const updateMode=()=>{const mode=$("sessionMode").value;$("countWrap").classList.toggle("hidden",mode!=="count");$("durationWrap").classList.toggle("hidden",mode!=="timed");$("setupHint").textContent=mode==="all"?"The selected finite question pool will be tested once, without repeats.":mode==="timed"?"Answer as many as possible before time expires.":"The session ends after the selected number of questions.";};
  $("sessionMode").addEventListener("change",updateMode);updateMode();
+ const answerModeHelp=()=>{const node=$("setupHint");if(!node)return;const mode=$("answerMode")?.value;const currentMode=$("sessionMode")?.value||"count";const base=currentMode==="all"?"The selected finite question pool will be tested once, without repeats.":currentMode==="timed"?"Answer as many as possible before time expires.":"The session ends after the selected number of questions.";node.textContent=base+(mode==="options"?" Answer format is multiple-choice.":" Answer format is typed input.")};
+ $("answerMode")?.addEventListener("change",answerModeHelp);answerModeHelp();
  $("startBtn").addEventListener("click",()=>start());
  $("answerForm").addEventListener("submit",e=>{e.preventDefault();submitCurrent()});
  $("endBtn").addEventListener("click",()=>{if(app.running)finish("ended")});
@@ -139,7 +216,7 @@ function mount(kind){
  renderTrainerHistory(kind);
 }
 function start(overridePool=null){
- clearInterval(app.clock);clearTimeout(app.qTimer);app.opts=getOpts(app.kind);app.sessionMode=$("sessionMode").value;app.pool=overridePool?U.shuffle(overridePool.slice()):qPool(app.kind,$("difficulty").value,app.opts);if(!app.pool.length){alert("No questions are available for these settings. Try another range or difficulty.");return}
+ saveSharedPrefs();saveTrainerPrefs(app.kind);clearInterval(app.clock);clearTimeout(app.qTimer);app.opts=getOpts(app.kind);app.sessionMode=$("sessionMode").value;app.pool=overridePool?U.shuffle(overridePool.slice()):qPool(app.kind,$("difficulty").value,app.opts);if(!app.pool.length){alert("No questions are available for these settings. Try another range or difficulty.");return}
  app.index=0;app.records=[];app.current=null;app.running=true;app.locked=false;app.sessionStarted=Date.now();app.streak=0;app.bestStreak=0;app.wrongOnly=!!overridePool;
  app.target=app.sessionMode==="count"?Math.max(1,Math.min(10000,intOpt("questionCount",30,1,10000))):app.pool.length;
  app.timeLimit=app.sessionMode==="timed"?Math.max(15000,Math.min(10800000,Number($("duration").value||2)*60000)):0;
@@ -157,21 +234,28 @@ function showQuestion(){
   else {finish("complete");return;}
  }
  app.current=app.pool[app.index % app.pool.length];app.locked=false;app.qStarted=Date.now();
- if(app.current.kind==="numeric"&&app.cfg.auto&&/^-?\d+$/.test(String(app.current.answer))){app.current.autoDigits=true}
+ if(app.current.kind==="numeric"&&app.cfg.auto&&/^-?\d+$/.test(String(app.current.answer))&&$("answerMode")?.value!=="options"){app.current.autoDigits=true}else{app.current.autoDigits=false}
  $("questionType").textContent=app.cfg.title.toUpperCase();$("questionText").textContent=app.current.text;$("questionHint").textContent=app.current.hint||"";$("feedback").className="feedback neutral";$("feedback").textContent="";$("targetHint").textContent=Number($("perQuestion").value)>0?`Target: ${$("perQuestion").value} seconds per question`:"";
  inputFor(app.current);updateStats();
- if(app.current.kind==="choice"&&app.current.options.length===2){/* button selection auto checks */}
  if(Number($("perQuestion").value)>0){const cap=Math.max(1,Number($("perQuestion").value))*1000;app.qTimer=setTimeout(()=>{if(app.running&&!app.locked){recordAnswer("",true,"timeout")}},cap)}
 }
 function submitCurrent(){if(!app||!app.running||app.locked||!app.current)return;const el=$("answerInput");const raw=el?el.value.trim():"";if(!raw&&app.current.kind!=="multi"){ $("feedback").className="feedback neutral";$("feedback").textContent="Enter or select an answer first.";return }recordAnswer(raw,false)}
 function recordAnswer(raw,timeout=false,forcedStatus=null){
  if(!app.running||app.locked)return;app.locked=true;clearTimeout(app.qTimer);const elapsed=Date.now()-app.qStarted;const q=app.current;const correct=!timeout&&compareAnswer(q,raw);const status=forcedStatus||(timeout?"unanswered":correct?"correct":"wrong");
+ const optionsMode=$("answerMode")?.value==="options";const autoSingleChoice=optionsMode&&q.kind!=="multi";
  const rec={q,question:q.text,hint:q.hint||"",userAnswer:raw,correctAnswer:q.answer,status,correct,elapsedMs:elapsed,explanation:q.explain||""};app.records.push(rec);if(correct){app.streak++;app.bestStreak=Math.max(app.bestStreak,app.streak)}else app.streak=0;
+ if(autoSingleChoice){
+  renderResolvedQuestion(q,timeout?q.answer:raw,correct,timeout);
+  $("answerControl").querySelectorAll("[data-choice]").forEach(b=>{
+   const isRight=compareAnswer(q,b.dataset.choice);const isSelected=!timeout&&b.dataset.choice===String(raw);
+   if(isRight)b.classList.add("correct-option");if(isSelected&&!correct)b.classList.add("wrong-option");
+  });
+ }
  if(timeout){$("feedback").className="feedback bad";$("feedback").textContent=`Time target reached. Correct answer: ${q.answer}.`}
  else if(correct){$("feedback").className="feedback good";$("feedback").textContent="✓ Correct!";}else{$("feedback").className="feedback bad";$("feedback").textContent=`Not quite — correct answer: ${q.answer}${q.explain?" · "+q.explain:""}`}
  $("answerControl").querySelectorAll("input,button").forEach(el=>el.disabled=true);$("submitBtn").disabled=true;updateStats();
  app.index++;
- const delay=correct?0:1000;
+ const delay=autoSingleChoice?1000:(correct?0:1000);
  if(app.sessionMode==="timed"&&Date.now()>=app.deadline){finish("time");return}
  if(delay===0){showQuestion()}else app.qTimer=setTimeout(()=>{if(!app.running)return;if(app.sessionMode==="timed"&&Date.now()>=app.deadline){finish("time");return}showQuestion()},delay);
 }

@@ -20,11 +20,13 @@
     </section>
     <section class="panel setup-panel">
       <h2>Set up your sprint</h2>
+      <p class="muted tiny shared-settings-note">Answer format, difficulty, session mode, question count, time limit and per-question target carry across trainers on this browser.</p>
       <div class="setup-grid">
         <label>Session mode<select id="sessionMode"><option value="count">Question count</option><option value="timed">Timed sprint</option><option value="all">All possibilities once</option></select></label>
         <label id="countWrap">Questions<input id="questionCount" type="number" min="1" max="10000" value="30"></label>
         <label id="durationWrap" class="hidden">Time limit (minutes)<input id="duration" type="number" min="0.25" max="180" step="0.25" value="2"></label>
         <label>Difficulty<select id="difficulty"><option value="progressive">Progressive</option><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option><option value="mixed">Mixed</option></select></label>
+        <label>Answer format (all trainers)<select id="answerMode"><option value="input">Type answer</option><option value="options">Multiple-choice options</option></select><small>Remembered across all trainers on this browser</small></label>
         <label>Per-question target (seconds)<input id="perQuestion" type="number" min="0" max="300" value="0"><small>0 = no individual target</small></label>
         <div class="trainer-options" id="trainerOptions"></div>
       </div>

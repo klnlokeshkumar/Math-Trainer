@@ -23,10 +23,12 @@ Each trainer has its own `index.html`, `style.css`, and `script.js`. Reusable st
 - Question-count, timed, and all-possibilities-once session modes.
 - Optional per-question time target.
 - Progressive, easy, medium, hard and mixed difficulty choices.
+- Universal answer format: choose typed input or multiple-choice options; the preference follows the learner across all trainers in the same browser.
+- Shared difficulty, session mode, question count, time limit and per-question target settings carry across all trainers. Square-root/cube-root approximation mode and rounding precision are shared between the two root trainers; other skill-specific settings are remembered for that individual trainer.
 - Correct answers advance immediately; incorrect answers reveal the correct answer for one second.
 - Session termination checks on time expiry, count completion, pool completion and manual stop.
 - End-of-session question review with entered answer, correct answer, result, response time and explanation where available.
-- Browser-local analytics in `localStorage`; history can be exported as JSON or cleared from the homepage.
+- Browser-local analytics and trainer preferences in `localStorage`; history can be exported as JSON or cleared from the homepage. Preferences stay in the current browser profile and are not synced to other devices.
 - Decimal comparison is numeric, so `0.5`, `0.50` and `0.500` are treated as equal when appropriate. Fraction answers are compared as equivalent simplified fractions.
 - Responsive layout for desktop and mobile.
 
@@ -74,3 +76,8 @@ math-practice-hub/
 - Timed sessions recycle a shuffled pool only after exhausting it; count-limited and all-once sessions do not intentionally repeat a question before the pool is exhausted.
 - Approximate division and optional square-root/cube-root practice have explicit rounding targets to make grading unambiguous.
 - Fraction/decimal inputs use Enter or the Check button because decimal answers can have different lengths. Numeric questions use automatic submission only when a safe integer digit count is known.
+
+### Multiple-choice behavior (v6)
+- Single-answer multiple-choice questions submit as soon as an option is selected; the Check answer button is hidden for these questions.
+- The resolved answer is inserted into the question line and colored green for correct responses or red for incorrect responses. The correct choice is highlighted green, and a wrong selected choice is highlighted red.
+- Multiple-choice single-answer feedback stays visible for one second before the next question. Select-all-that-apply questions retain a Check answer button.
