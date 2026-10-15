@@ -1,55 +1,31 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="A simple collection of interactive maths practice trainers.">
-  <title>Math Practice Hub</title>
-  <link rel="stylesheet" href="css/style.css">
-  <script src="js/main.js" defer></script>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#4f46e5"><title>Math Practice Hub · SSC CGL Sprint Training</title>
+<link rel="stylesheet" href="assets/css/site.css">
 </head>
 <body>
-  <header class="hero">
-    <nav class="topbar" aria-label="Main navigation">
-      <a class="wordmark" href="index.html"><span class="mark">∑</span><span>Math Practice Hub</span></a>
-      <span class="top-note">Free · Focused · Browser-based</span>
-    </nav>
-    <div class="hero-content">
-      <p class="eyebrow">YOUR PERSONAL MATHS WORKOUT</p>
-      <h1>Small practice.<br><span>Big progress.</span></h1>
-      <p class="hero-copy">Choose a trainer, set your pace, and build fluency one question at a time. No sign-in and no installation required.</p>
-      <a class="hero-cta" href="#trainers">Explore trainers <span aria-hidden="true">↓</span></a>
-    </div>
-    <div class="hero-decoration decor-one">×</div><div class="hero-decoration decor-two">%</div><div class="hero-decoration decor-three">÷</div>
-  </header>
-  <main class="content" id="trainers">
-    <div class="section-heading">
-      <div><p class="eyebrow">THE TRAINER LIBRARY</p><h2>What would you like to practise?</h2><p class="section-copy">Pick a trainer below. Each one has its own focused practice session and end-of-session review.</p></div>
-      <label class="search-wrap"><span class="sr-only">Search trainers</span><span aria-hidden="true">⌕</span><input id="trainerSearch" type="search" placeholder="Find a trainer…"></label>
-    </div>
-    <section class="trainer-grid" id="trainerGrid" aria-label="Available trainers">
-      <a class="trainer-card card-violet" href="trainers/table-trainer/index.html" data-search="tables multiplication division times tables arithmetic">
-        <div class="card-top"><span class="card-icon">×</span><span class="card-number">01 / CORE SKILLS</span></div>
-        <h3>Table Trainer</h3><p>Practise multiplication tables from 1 to 30, or sharpen division recall. Choose your table range and session style.</p>
-        <div class="tag-row"><span>Multiplication</span><span>Division</span><span>Timed mode</span></div>
-        <div class="card-bottom"><span>Open trainer</span><span class="arrow">↗</span></div>
-      </a>
-      <a class="trainer-card card-teal" href="trainers/fractions-decimals/index.html" data-search="fractions decimal conversion numerator denominator">
-        <div class="card-top"><span class="card-icon">½</span><span class="card-number">02 / NUMBER SENSE</span></div>
-        <h3>Fractions to Decimals</h3><p>Turn common fractions into decimal numbers, build speed, and review every answer at the end.</p>
-        <div class="tag-row"><span>Conversions</span><span>Decimals</span><span>Instant feedback</span></div>
-        <div class="card-bottom"><span>Open trainer</span><span class="arrow">↗</span></div>
-      </a>
-      <a class="trainer-card card-orange" href="trainers/percentage-trainer/index.html" data-search="percentages percentage of a number discounts maths">
-        <div class="card-top"><span class="card-icon">%</span><span class="card-number">03 / EVERYDAY MATHS</span></div>
-        <h3>Percentage Trainer</h3><p>Calculate percentages of numbers with shuffled questions, flexible session lengths, and answer analysis.</p>
-        <div class="tag-row"><span>Mental maths</span><span>Percentages</span><span>Practice review</span></div>
-        <div class="card-bottom"><span>Open trainer</span><span class="arrow">↗</span></div>
-      </a>
-      <div class="future-card" aria-label="More trainers can be added"><span class="future-plus">＋</span><div><strong>More trainers can live here</strong><p>Add a new folder and list it on this homepage as your practice library grows.</p></div></div>
-    </section>
-    <p class="empty-state" id="emptyState" hidden>No trainers match that search. Try another term.</p>
-  </main>
-  <footer class="site-footer"><span>Math Practice Hub</span><span>Made for independent practice.</span></footer>
-</body>
-</html>
+<header class="site-header home-header"><a class="brand" href="index.html"><span class="brand-mark">∑</span><span>Math Practice Hub<small>SSC CGL · Calculation Sprint</small></span></a><nav><a href="#trainers">Trainers</a><a href="#analytics">My analytics</a><a href="README.md">About</a></nav></header>
+<main class="home-main">
+<section class="hero"><div class="hero-copy"><p class="eyebrow">YOUR DAILY CALCULATION WORKOUT</p><h1>Calculate faster.<br><span>Compete with the clock.</span></h1><p>Eleven focused trainers for number sense, arithmetic speed and the calculation skills used in competitive government exams.</p><div class="hero-actions"><a class="btn primary" href="#trainers">Choose a trainer ↓</a><span class="muted small">No account · Works offline after loading · Local history</span></div></div><div class="hero-art"><div class="hero-number">25²</div><div class="hero-equals">= 625</div><div class="hero-chip">Accuracy × Speed</div></div></section>
+<section class="overview-metrics" id="analytics">
+<div><small>SESSIONS COMPLETED</small><strong id="homeSessions">0</strong></div><div><small>QUESTIONS ANSWERED</small><strong id="homeQuestions">0</strong></div><div><small>OVERALL ACCURACY</small><strong id="homeAccuracy">—</strong></div><div><small>BEST STREAK</small><strong id="homeStreak">0</strong></div>
+</section>
+<section class="section-heading" id="trainers"><div><p class="eyebrow">THE TRAINER LIBRARY</p><h2>Choose your next sprint</h2><p class="muted">Start with a skill, set a timer, then review every answer.</p></div><input id="trainerSearch" class="search-input" type="search" placeholder="Search trainers…" aria-label="Search trainers"></section>
+<div class="trainer-grid" id="trainerGrid">
+<a class="trainer-card" data-search="tables multiplication division times table" href="trainers/table-trainer/index.html"><span class="card-icon violet">×÷</span><span class="card-tag">ARITHMETIC</span><h3>Tables 20 × 20</h3><p>Multiplication and inverse division, with table selection and a full unique grid.</p><span class="card-bottom">Start trainer <b>↗</b></span></a>
+<a class="trainer-card" data-search="two digit multiplication product" href="trainers/multiplication-2-digit/index.html"><span class="card-icon blue">×</span><span class="card-tag">ARITHMETIC</span><h3>Two-digit multiplication</h3><p>Practise products from 10 × 10 through 99 × 99 with progressive difficulty.</p><span class="card-bottom">Start trainer <b>↗</b></span></a>
+<a class="trainer-card" data-search="squares square roots radicals" href="trainers/squares-roots/index.html"><span class="card-icon orange">x²</span><span class="card-tag">POWERS & ROOTS</span><h3>Squares and square roots</h3><p>Recall squares quickly and reverse them into exact square roots.</p><span class="card-bottom">Start trainer <b>↗</b></span></a>
+<a class="trainer-card" data-search="cubes cube roots" href="trainers/cubes-roots/index.html"><span class="card-icon pink">x³</span><span class="card-tag">POWERS & ROOTS</span><h3>Cubes and cube roots</h3><p>Build fast recall of perfect cubes and their corresponding roots.</p><span class="card-bottom">Start trainer <b>↗</b></span></a>
+<a class="trainer-card" data-search="fraction decimal conversion rounding" href="trainers/fractions-decimals/index.html"><span class="card-icon green">½</span><span class="card-tag">FRACTIONS</span><h3>Fractions to decimals</h3><p>Convert fractions exactly or round to two decimal places.</p><span class="card-bottom">Start trainer <b>↗</b></span></a>
+<a class="trainer-card" data-search="percentage fraction percent conversion" href="trainers/percentages-fractions/index.html"><span class="card-icon orange">%</span><span class="card-tag">PERCENTAGES</span><h3>Percentages ↔ fractions</h3><p>Convert in both directions and simplify fraction answers.</p><span class="card-bottom">Start trainer <b>↗</b></span></a>
+<a class="trainer-card" data-search="divisibility rules divisible" href="trainers/divisibility-rules/index.html"><span class="card-icon blue">÷</span><span class="card-tag">NUMBER PROPERTIES</span><h3>Divisibility rules</h3><p>Recognize divisibility patterns without performing long division.</p><span class="card-bottom">Start trainer <b>↗</b></span></a>
+<a class="trainer-card" data-search="unit digit last two digits powers cycles" href="trainers/unit-last-digits/index.html"><span class="card-icon violet">…</span><span class="card-tag">NUMBER PATTERNS</span><h3>Unit & last two digits</h3><p>Use power cycles and modular patterns to find trailing digits.</p><span class="card-bottom">Start trainer <b>↗</b></span></a>
+<a class="trainer-card" data-search="approximate division estimate quotient" href="trainers/approximate-division/index.html"><span class="card-icon green">≈</span><span class="card-tag">ESTIMATION</span><h3>Approximate division</h3><p>Estimate quotients using rounding and compatible numbers.</p><span class="card-bottom">Start trainer <b>↗</b></span></a>
+<a class="trainer-card" data-search="prime hunt numbers 1 200 sieve" href="trainers/prime-hunt/index.html"><span class="card-icon pink">200</span><span class="card-tag">PRIME NUMBERS</span><h3>Prime hunt: 1–200</h3><p>Identify primes in a grid and review missed primes and false positives.</p><span class="card-bottom">Start trainer <b>↗</b></span></a>
+<a class="trainer-card" data-search="prime or composite factor" href="trainers/prime-or-not/index.html"><span class="card-icon blue">p?</span><span class="card-tag">PRIME NUMBERS</span><h3>Prime or composite?</h3><p>Classify a number and learn a factor that proves compositeness.</p><span class="card-bottom">Start trainer <b>↗</b></span></a>
+</div>
+<section class="history-panel panel"><div><p class="eyebrow">YOUR PRACTICE HISTORY</p><h2>Progress that stays with you</h2><p class="muted">Your browser stores session summaries locally. No account or server is used.</p></div><div id="homeHistory" class="home-history"></div><div class="history-actions"><button id="exportHistory" class="btn secondary">Export history (JSON)</button><button id="clearHistory" class="btn danger-outline">Clear local history</button></div><p class="tiny muted" id="historyMessage" aria-live="polite"></p></section>
+<footer><span>Math Practice Hub</span><span>Made for consistent, focused practice.</span></footer>
+</main><script src="shared/question-utils.js"></script><script src="assets/js/hub.js"></script></body></html>

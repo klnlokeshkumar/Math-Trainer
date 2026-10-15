@@ -1,69 +1,76 @@
 # Math Practice Hub
 
-A static, GitHub Pages-friendly collection of small maths practice trainers. Everything runs in the browser; there is no build step, backend, account, or package installation.
+A static, GitHub Pages-ready practice site for SSC CGL and other competitive-exam calculation skills. No build step, backend, account, or third-party JavaScript dependency is required.
 
 ## Included trainers
 
-- **Table Trainer** — multiplication and division, table selection from 1–30, custom start/end factor range, question-count or timed sessions, and all selected combinations once.
-- **Fractions to Decimals** — convert terminating common fractions to decimals with question-count, timed, or all-examples mode.
-- **Percentage Trainer** — calculate percentages of numbers with question-count, timed, or all-combinations mode.
+1. Tables 20 × 20 (multiplication/division, custom tables and factor limits)
+2. Two-digit multiplication
+3. Squares and square roots
+4. Cubes and cube roots
+5. Fractions to decimals (exact values up to two decimal places or rounding to two places)
+6. Percentages ↔ fractions
+7. Divisibility rules
+8. Unit digit and last two digits of powers
+9. Approximate division
+10. Prime hunt (1–200)
+11. Prime or composite
 
-Each trainer has its own `index.html`, `style.css`, and `script.js` inside its directory so it can be maintained independently.
+Each trainer has its own `index.html`, `style.css`, and `script.js`. Reusable styles and the session engine live in `assets/` and `shared/`.
 
-## Folder structure
+## Features
+
+- Question-count, timed, and all-possibilities-once session modes.
+- Optional per-question time target.
+- Progressive, easy, medium, hard and mixed difficulty choices.
+- Correct answers advance immediately; incorrect answers reveal the correct answer for one second.
+- Session termination checks on time expiry, count completion, pool completion and manual stop.
+- End-of-session question review with entered answer, correct answer, result, response time and explanation where available.
+- Browser-local analytics in `localStorage`; history can be exported as JSON or cleared from the homepage.
+- Decimal comparison is numeric, so `0.5`, `0.50` and `0.500` are treated as equal when appropriate. Fraction answers are compared as equivalent simplified fractions.
+- Responsive layout for desktop and mobile.
+
+## Run locally
+
+Open `index.html` in a modern browser. For the best local development experience, you can use a static local server, but there is no build step.
+
+## Publish with GitHub Pages
+
+1. Create a GitHub repository.
+2. Upload the **contents** of this folder to the repository root (so `index.html` is at the root).
+3. Go to **Settings → Pages**.
+4. Select **Deploy from a branch**, select `main` and `/(root)`, then save.
+5. Open the published Pages URL once deployment completes.
+
+All internal links are relative paths and are intended to work under a project Pages URL.
+
+## Local history and privacy
+
+Session history is saved to `localStorage` in the current browser profile and on the current device. It is not sent to a server. Clearing browser site data can remove it. Use **Export history (JSON)** on the homepage to make a backup.
+
+## Project layout
 
 ```text
 math-practice-hub/
 ├── index.html
-├── css/
-│   └── style.css
-├── js/
-│   └── main.js
-├── trainers/
-│   ├── table-trainer/
-│   │   ├── index.html
-│   │   ├── style.css
-│   │   └── script.js
-│   ├── fractions-decimals/
-│   │   ├── index.html
-│   │   ├── style.css
-│   │   └── script.js
-│   └── percentage-trainer/
-│       ├── index.html
-│       ├── style.css
-│       └── script.js
-└── README.md
+├── README.md
+├── .nojekyll
+├── assets/
+│   ├── css/site.css
+│   └── js/hub.js
+├── shared/
+│   ├── question-utils.js
+│   └── session-engine.js
+└── trainers/
+    └── <trainer-slug>/
+        ├── index.html
+        ├── style.css
+        └── script.js
 ```
-
-## Run locally
-
-Open the root `index.html` in a browser. For a closer match to a hosted static site, start a simple local server from this folder, for example:
-
-```bash
-python -m http.server 8000
-```
-
-Then open `http://localhost:8000`.
-
-## Publish with GitHub Pages
-
-1. Create a GitHub repository and upload the contents of this folder to the repository root.
-2. In the repository, open **Settings → Pages**.
-3. Under **Build and deployment**, choose **Deploy from a branch**.
-4. Choose your default branch (usually `main`) and the `/(root)` folder, then save.
-5. Wait for the Pages deployment to complete. The published site URL will appear in the Pages settings.
-
-This structure uses relative links, so it also works when GitHub Pages publishes the site under a repository subpath.
-
-## Add another trainer
-
-1. Create `trainers/your-trainer/`.
-2. Add `index.html`, `style.css`, and `script.js` to that folder.
-3. Link the CSS and JS from the trainer HTML using relative paths, and add a return link to `../../index.html`.
-4. Add a trainer card to the root `index.html`, pointing to `trainers/your-trainer/index.html`.
-5. Update the included-trainers section in this README.
 
 ## Notes
 
-- Trainer progress is not uploaded or synced. Sessions run client-side in the current browser tab.
-- The table trainer automatically submits an answer once its digit count reaches the expected answer's digit count, matching the rapid-entry design. Fractions and percentages use a Check answer button / Enter because decimal and alternate numeric formatting can have variable lengths.
+- “All possibilities once” uses the finite generated pool for the selected trainer options.
+- Timed sessions recycle a shuffled pool only after exhausting it; count-limited and all-once sessions do not intentionally repeat a question before the pool is exhausted.
+- Approximate division has an explicit rounding target to make grading unambiguous.
+- Fraction/decimal inputs use Enter or the Check button because decimal answers can have different lengths. Numeric questions use automatic submission only when a safe integer digit count is known.

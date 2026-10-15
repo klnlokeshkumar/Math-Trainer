@@ -1,84 +1,67 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Table Trainer — Math Practice Hub</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#4f46e5">
+  <title>Tables 20 × 20 · Math Practice Hub</title>
+  <link rel="stylesheet" href="../../assets/css/site.css">
+  <link rel="stylesheet" href="style.css">
 </head>
-<body>
-<div class="app">
-  <nav class="site-nav"><a href="../../index.html">← All trainers</a></nav>
-  <header>
-    <div class="brand"><div class="logo">×</div><div><h1>Table Trainer</h1><div class="sub">Build speed. Build confidence.</div></div></div>
-    <div class="pill">MULTIPLICATION · DIVISION</div>
+<body data-trainer="table">
+  <header class="site-header">
+    <a class="brand" href="../../index.html"><span class="brand-mark">∑</span><span>Math Practice Hub<small>SSC CGL · Calculation Sprint</small></span></a>
+    <a class="back-link" href="../../index.html">← All trainers</a>
   </header>
-  <div class="layout">
-    <aside class="panel settings">
-      <p class="section-title">Practice setup</p>
-      <div class="seg" aria-label="Operation">
-        <button type="button" class="active" data-op="multiply">× Multiply</button>
-        <button type="button" data-op="divide">÷ Divide</button>
+  <main class="trainer-page">
+    <section class="trainer-heading">
+      <div><p class="eyebrow">CALCULATION SPRINT</p><h1>Tables 20 × 20</h1><p class="muted">Multiplication and division fluency</p></div>
+      <span class="trainer-icon">×÷</span>
+    </section>
+    <section class="panel setup-panel">
+      <h2>Set up your sprint</h2>
+      <div class="setup-grid">
+        <label>Session mode<select id="sessionMode"><option value="count">Question count</option><option value="timed">Timed sprint</option><option value="all">All possibilities once</option></select></label>
+        <label id="countWrap">Questions<input id="questionCount" type="number" min="1" max="10000" value="30"></label>
+        <label id="durationWrap" class="hidden">Time limit (minutes)<input id="duration" type="number" min="0.25" max="180" step="0.25" value="2"></label>
+        <label>Difficulty<select id="difficulty"><option value="progressive">Progressive</option><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option><option value="mixed">Mixed</option></select></label>
+        <label>Per-question target (seconds)<input id="perQuestion" type="number" min="0" max="300" value="0"><small>0 = no individual target</small></label>
+        <div class="trainer-options" id="trainerOptions"></div>
       </div>
-      <p class="section-title">Choose tables</p>
-      <div class="table-grid" id="tableGrid" aria-label="Select tables"></div>
-      <div class="select-actions"><button class="text-btn" id="selectAll" type="button">Select all</button><button class="text-btn" id="selectNone" type="button">Clear</button><button class="text-btn" id="selectCommon" type="button">1–12</button></div>
-      <div class="field">
-        <label>Multiply/divide by — range</label>
-        <div class="range-grid">
-          <div><label for="rangeStart" class="sub-label">Start</label><input id="rangeStart" type="number" min="1" max="1000" value="1" inputmode="numeric"></div>
-          <div class="range-dash">to</div>
-          <div><label for="rangeEnd" class="sub-label">End</label><input id="rangeEnd" type="number" min="1" max="1000" value="20" inputmode="numeric"></div>
-        </div>
-        <div class="hint">Set any range from 1 to 1000. For example, table 8 with 1–20 includes 8 × 20.</div>
+      <div class="setup-actions"><button class="btn primary" id="startBtn">Start sprint →</button><p class="muted small" id="setupHint">Choose your settings, then start.</p></div>
+    </section>
+    <section class="panel practice-panel" id="practicePanel">
+      <div class="stats-row">
+        <div><small>QUESTION</small><strong id="questionStat">—</strong></div>
+        <div><small>CORRECT</small><strong id="correctStat">0</strong></div>
+        <div><small>ACCURACY</small><strong id="accuracyStat">—</strong></div>
+        <div class="timer-stat"><small>TIME LEFT</small><strong id="timerStat">—</strong></div>
       </div>
-      <p class="section-title" style="margin-top:22px">Session length</p>
-      <div class="seg" aria-label="Session type">
-        <button type="button" class="active" data-mode="count">Questions</button>
-        <button type="button" data-mode="timed">Timed</button>
+      <div class="progress-track"><div id="progressBar"></div></div>
+      <div class="question-area" id="questionArea">
+        <p class="eyebrow" id="questionType">READY</p>
+        <div class="question-text" id="questionText">Choose your settings above to begin.</div>
+        <p class="question-hint" id="questionHint"></p>
+        <form id="answerForm" autocomplete="off">
+          <div id="answerControl"></div>
+          <button class="btn primary answer-submit" id="submitBtn" type="submit">Check answer</button>
+        </form>
+        <p id="feedback" class="feedback" aria-live="polite">Your results and history are saved locally in this browser.</p>
+        <p class="muted tiny" id="targetHint"></p>
       </div>
-      <div class="field" id="countField"><label for="count">Number of questions</label><input id="count" type="number" min="1" max="10000" value="30"><div class="hint">Questions are drawn without replacement until the pool is used.</div></div>
-      <div class="field hidden" id="timeField"><label for="minutes">Time limit (minutes)</label><input id="minutes" type="number" min="1" max="180" value="5"><div class="hint">Keep answering until the timer reaches zero.</div></div>
-      <label class="checkline"><input id="allMode" type="checkbox"> All possibilities once</label>
-      <div class="hint">Tests every selected table × each number in your range exactly once. This overrides the session length.</div>
-      <button id="startBtn" class="primary" type="button">Start practice →</button>
-      <div class="hint" id="setupHint">Select one or more tables to begin.</div>
-    </aside>
-
-    <main class="panel practice">
-      <div class="practice-top">
-        <div class="stats">
-          <div class="stat"><small>QUESTION</small><strong id="progressStat">— / —</strong></div>
-          <div class="stat"><small>CORRECT</small><strong id="correctStat">0</strong></div>
-          <div class="stat"><small>ACCURACY</small><strong id="accuracyStat">—</strong></div>
-        </div>
-        <div class="pill" id="timerPill">READY WHEN YOU ARE</div>
+      <div class="results-area hidden" id="resultsArea">
+        <div class="results-head"><div><p class="eyebrow">SPRINT COMPLETE</p><h2 id="resultsTitle">Your results</h2><p class="muted" id="resultsSummary"></p></div><button class="btn secondary" id="retryWrongBtn">Retry missed</button></div>
+        <div class="results-metrics" id="resultsMetrics"></div>
+        <div class="analysis-insight" id="analysisInsight"></div>
+        <div class="table-scroll"><table class="review-table"><thead><tr><th>#</th><th>Question</th><th>Your answer</th><th>Correct answer</th><th>Result</th><th>Time</th></tr></thead><tbody id="reviewBody"></tbody></table></div>
+        <div class="results-actions"><button class="btn primary" id="restartBtn">New sprint</button><a class="btn secondary" href="../../index.html">Back to trainer hub</a></div>
       </div>
-      <div class="progress-wrap"><div class="progress" id="progressBar"></div></div>
-      <section class="stage" id="stage">
-        <div id="quiz">
-          <div class="eyebrow" id="modeLabel">YOUR NEXT STREAK STARTS HERE</div>
-          <div class="question" id="question">8 × 7 = ?</div>
-          <div class="answer-wrap"><input id="answer" type="text" inputmode="numeric" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Your answer" placeholder="Answer" disabled></div>
-          <div class="feedback neutral" id="feedback">Choose your tables and press Start practice.</div>
-          <div class="keyboard-hint">Type the answer — it submits automatically.</div>
-        </div>
-        <div class="done" id="done">
-          <div class="done-header"><div class="done-icon">✓</div><h2 id="doneTitle">Session complete!</h2><p id="doneText"></p>
-            <div class="review-summary" id="reviewSummary"></div>
-            <button class="primary again-button" id="againBtn" type="button">Practice again ↻</button>
-          </div>
-          <div class="review-area">
-            <h3>Question-by-question analysis</h3>
-            <p class="review-caption">Review every submitted answer, the correct answer, and any questions left unanswered.</p>
-            <div class="table-scroll"><table class="results-table"><thead><tr><th>#</th><th>Question</th><th>Your answer</th><th>Correct answer</th><th>Result</th></tr></thead><tbody id="resultsBody"></tbody></table></div>
-          </div>
-        </div>
-        <div class="stage-footer"><span class="session-note" id="sessionNote">Your answers stay on this device.</span><button class="secondary" id="stopBtn" type="button" disabled>End session</button></div>
-      </section>
-    </main>
-  </div>
-</div>
-<script src="script.js" defer></script>
+      <div class="practice-footer"><span class="muted tiny" id="sessionNote">Correct answers advance immediately; incorrect answers show the solution for 1 second.</span><button class="btn secondary" id="endBtn" disabled>End session</button></div>
+    </section>
+    <section class="panel mini-history"><div><h2>Your progress</h2><p class="muted small">History is stored only in this browser on this device.</p></div><div id="trainerHistory" class="history-summary"></div><a href="../../index.html#analytics" class="text-link">View all analytics →</a></section>
+  </main>
+  <script src="../../shared/question-utils.js"></script>
+  <script src="../../shared/session-engine.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>

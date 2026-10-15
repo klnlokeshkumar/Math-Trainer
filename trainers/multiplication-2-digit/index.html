@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#4f46e5">
+  <title>Two-digit multiplication · Math Practice Hub</title>
+  <link rel="stylesheet" href="../../assets/css/site.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-trainer="multiply2">
+  <header class="site-header">
+    <a class="brand" href="../../index.html"><span class="brand-mark">∑</span><span>Math Practice Hub<small>SSC CGL · Calculation Sprint</small></span></a>
+    <a class="back-link" href="../../index.html">← All trainers</a>
+  </header>
+  <main class="trainer-page">
+    <section class="trainer-heading">
+      <div><p class="eyebrow">CALCULATION SPRINT</p><h1>Two-digit multiplication</h1><p class="muted">Fast two-digit × two-digit calculation</p></div>
+      <span class="trainer-icon">×</span>
+    </section>
+    <section class="panel setup-panel">
+      <h2>Set up your sprint</h2>
+      <div class="setup-grid">
+        <label>Session mode<select id="sessionMode"><option value="count">Question count</option><option value="timed">Timed sprint</option><option value="all">All possibilities once</option></select></label>
+        <label id="countWrap">Questions<input id="questionCount" type="number" min="1" max="10000" value="30"></label>
+        <label id="durationWrap" class="hidden">Time limit (minutes)<input id="duration" type="number" min="0.25" max="180" step="0.25" value="2"></label>
+        <label>Difficulty<select id="difficulty"><option value="progressive">Progressive</option><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option><option value="mixed">Mixed</option></select></label>
+        <label>Per-question target (seconds)<input id="perQuestion" type="number" min="0" max="300" value="0"><small>0 = no individual target</small></label>
+        <div class="trainer-options" id="trainerOptions"></div>
+      </div>
+      <div class="setup-actions"><button class="btn primary" id="startBtn">Start sprint →</button><p class="muted small" id="setupHint">Choose your settings, then start.</p></div>
+    </section>
+    <section class="panel practice-panel" id="practicePanel">
+      <div class="stats-row">
+        <div><small>QUESTION</small><strong id="questionStat">—</strong></div>
+        <div><small>CORRECT</small><strong id="correctStat">0</strong></div>
+        <div><small>ACCURACY</small><strong id="accuracyStat">—</strong></div>
+        <div class="timer-stat"><small>TIME LEFT</small><strong id="timerStat">—</strong></div>
+      </div>
+      <div class="progress-track"><div id="progressBar"></div></div>
+      <div class="question-area" id="questionArea">
+        <p class="eyebrow" id="questionType">READY</p>
+        <div class="question-text" id="questionText">Choose your settings above to begin.</div>
+        <p class="question-hint" id="questionHint"></p>
+        <form id="answerForm" autocomplete="off">
+          <div id="answerControl"></div>
+          <button class="btn primary answer-submit" id="submitBtn" type="submit">Check answer</button>
+        </form>
+        <p id="feedback" class="feedback" aria-live="polite">Your results and history are saved locally in this browser.</p>
+        <p class="muted tiny" id="targetHint"></p>
+      </div>
+      <div class="results-area hidden" id="resultsArea">
+        <div class="results-head"><div><p class="eyebrow">SPRINT COMPLETE</p><h2 id="resultsTitle">Your results</h2><p class="muted" id="resultsSummary"></p></div><button class="btn secondary" id="retryWrongBtn">Retry missed</button></div>
+        <div class="results-metrics" id="resultsMetrics"></div>
+        <div class="analysis-insight" id="analysisInsight"></div>
+        <div class="table-scroll"><table class="review-table"><thead><tr><th>#</th><th>Question</th><th>Your answer</th><th>Correct answer</th><th>Result</th><th>Time</th></tr></thead><tbody id="reviewBody"></tbody></table></div>
+        <div class="results-actions"><button class="btn primary" id="restartBtn">New sprint</button><a class="btn secondary" href="../../index.html">Back to trainer hub</a></div>
+      </div>
+      <div class="practice-footer"><span class="muted tiny" id="sessionNote">Correct answers advance immediately; incorrect answers show the solution for 1 second.</span><button class="btn secondary" id="endBtn" disabled>End session</button></div>
+    </section>
+    <section class="panel mini-history"><div><h2>Your progress</h2><p class="muted small">History is stored only in this browser on this device.</p></div><div id="trainerHistory" class="history-summary"></div><a href="../../index.html#analytics" class="text-link">View all analytics →</a></section>
+  </main>
+  <script src="../../shared/question-utils.js"></script>
+  <script src="../../shared/session-engine.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
