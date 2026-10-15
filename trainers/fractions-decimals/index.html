@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Practise converting common fractions to decimals."><title>Fractions to Decimals — Math Practice Hub</title><link rel="stylesheet" href="style.css"><script src="script.js" defer></script></head>
+<body>
+  <nav class="site-nav"><a href="../../index.html">← All trainers</a><span>NUMBER SENSE / 02</span></nav>
+  <header class="page-heading"><div class="brand-icon teal">½</div><div><p class="eyebrow">CONVERSION PRACTICE</p><h1>Fractions to Decimals</h1><p class="intro">Read the fraction, convert it to a decimal, and enter your answer.</p></div></header>
+  <main class="layout">
+    <aside class="panel settings">
+      <p class="section-label">SESSION SETUP</p>
+      <div class="seg" role="group" aria-label="Session mode"><button type="button" class="active" data-mode="count">Questions</button><button type="button" data-mode="timed">Timed</button></div>
+      <div class="field" id="countField"><label for="count">Number of questions</label><input id="count" type="number" min="1" max="10000" value="30"></div>
+      <div class="field hidden" id="timeField"><label for="minutes">Time limit (minutes)</label><input id="minutes" type="number" min="1" max="180" value="5"></div>
+      <label class="checkline"><input id="allMode" type="checkbox"> All examples once</label>
+      <p class="hint">Tests every fraction in the built-in practice set exactly once. It overrides the question count or timer.</p>
+      <button id="startBtn" class="primary" type="button">Start practice →</button>
+      <p class="hint" id="setupHint">Use a decimal like 0.25 or .25. Trailing zeroes are accepted.</p>
+    </aside>
+    <section class="panel practice">
+      <div class="practice-top"><div class="stats"><div class="stat"><small>PROGRESS</small><strong id="progressStat">— / —</strong></div><div class="stat"><small>CORRECT</small><strong id="correctStat">0</strong></div><div class="stat"><small>ACCURACY</small><strong id="accuracyStat">—</strong></div></div><span class="timer-pill" id="timerPill">READY</span></div>
+      <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+      <div class="stage">
+        <div id="quiz" class="quiz"><p id="modeLabel" class="eyebrow">FRACTION → DECIMAL</p><div id="question" class="question">3 / 8 <span>= ?</span></div><form id="answerForm" class="answer-form"><label class="sr-only" for="answer">Decimal answer</label><input id="answer" type="text" inputmode="decimal" autocomplete="off" placeholder="Enter decimal" disabled><button id="submitBtn" class="primary" type="submit" disabled>Check answer</button></form><div id="feedback" class="feedback neutral" aria-live="polite">Press Start practice to begin.</div><p class="helper">Press Enter or select Check answer.</p></div>
+        <div id="done" class="done hidden"><div class="done-hero"><div class="done-icon">✓</div><p class="eyebrow">SESSION SUMMARY</p><h2 id="doneTitle">Practice complete</h2><p id="doneText"></p><div class="summary" id="reviewSummary"></div><button class="primary replay" id="againBtn" type="button">Practise again ↻</button></div><div class="review"><h3>Question-by-question analysis</h3><p class="hint">See your answer beside the expected decimal.</p><div class="table-scroll"><table><thead><tr><th>#</th><th>Fraction</th><th>Your answer</th><th>Correct answer</th><th>Result</th></tr></thead><tbody id="resultsBody"></tbody></table></div></div></div>
+        <div class="stage-footer"><span id="sessionNote">Your practice stays in this browser.</span><button id="stopBtn" class="secondary" type="button" disabled>End session</button></div>
+      </div>
+    </section>
+  </main>
+  <footer class="footer"><span>Math Practice Hub</span><a href="../../index.html">Back to trainer library</a></footer>
+</body>
+</html>

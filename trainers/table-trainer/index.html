@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Table Trainer — Math Practice Hub</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <nav class="site-nav"><a href="../../index.html">← All trainers</a></nav>
+  <header>
+    <div class="brand"><div class="logo">×</div><div><h1>Table Trainer</h1><div class="sub">Build speed. Build confidence.</div></div></div>
+    <div class="pill">MULTIPLICATION · DIVISION</div>
+  </header>
+  <div class="layout">
+    <aside class="panel settings">
+      <p class="section-title">Practice setup</p>
+      <div class="seg" aria-label="Operation">
+        <button type="button" class="active" data-op="multiply">× Multiply</button>
+        <button type="button" data-op="divide">÷ Divide</button>
+      </div>
+      <p class="section-title">Choose tables</p>
+      <div class="table-grid" id="tableGrid" aria-label="Select tables"></div>
+      <div class="select-actions"><button class="text-btn" id="selectAll" type="button">Select all</button><button class="text-btn" id="selectNone" type="button">Clear</button><button class="text-btn" id="selectCommon" type="button">1–12</button></div>
+      <div class="field">
+        <label>Multiply/divide by — range</label>
+        <div class="range-grid">
+          <div><label for="rangeStart" class="sub-label">Start</label><input id="rangeStart" type="number" min="1" max="1000" value="1" inputmode="numeric"></div>
+          <div class="range-dash">to</div>
+          <div><label for="rangeEnd" class="sub-label">End</label><input id="rangeEnd" type="number" min="1" max="1000" value="20" inputmode="numeric"></div>
+        </div>
+        <div class="hint">Set any range from 1 to 1000. For example, table 8 with 1–20 includes 8 × 20.</div>
+      </div>
+      <p class="section-title" style="margin-top:22px">Session length</p>
+      <div class="seg" aria-label="Session type">
+        <button type="button" class="active" data-mode="count">Questions</button>
+        <button type="button" data-mode="timed">Timed</button>
+      </div>
+      <div class="field" id="countField"><label for="count">Number of questions</label><input id="count" type="number" min="1" max="10000" value="30"><div class="hint">Questions are drawn without replacement until the pool is used.</div></div>
+      <div class="field hidden" id="timeField"><label for="minutes">Time limit (minutes)</label><input id="minutes" type="number" min="1" max="180" value="5"><div class="hint">Keep answering until the timer reaches zero.</div></div>
+      <label class="checkline"><input id="allMode" type="checkbox"> All possibilities once</label>
+      <div class="hint">Tests every selected table × each number in your range exactly once. This overrides the session length.</div>
+      <button id="startBtn" class="primary" type="button">Start practice →</button>
+      <div class="hint" id="setupHint">Select one or more tables to begin.</div>
+    </aside>
+
+    <main class="panel practice">
+      <div class="practice-top">
+        <div class="stats">
+          <div class="stat"><small>QUESTION</small><strong id="progressStat">— / —</strong></div>
+          <div class="stat"><small>CORRECT</small><strong id="correctStat">0</strong></div>
+          <div class="stat"><small>ACCURACY</small><strong id="accuracyStat">—</strong></div>
+        </div>
+        <div class="pill" id="timerPill">READY WHEN YOU ARE</div>
+      </div>
+      <div class="progress-wrap"><div class="progress" id="progressBar"></div></div>
+      <section class="stage" id="stage">
+        <div id="quiz">
+          <div class="eyebrow" id="modeLabel">YOUR NEXT STREAK STARTS HERE</div>
+          <div class="question" id="question">8 × 7 = ?</div>
+          <div class="answer-wrap"><input id="answer" type="text" inputmode="numeric" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Your answer" placeholder="Answer" disabled></div>
+          <div class="feedback neutral" id="feedback">Choose your tables and press Start practice.</div>
+          <div class="keyboard-hint">Type the answer — it submits automatically.</div>
+        </div>
+        <div class="done" id="done">
+          <div class="done-header"><div class="done-icon">✓</div><h2 id="doneTitle">Session complete!</h2><p id="doneText"></p>
+            <div class="review-summary" id="reviewSummary"></div>
+            <button class="primary again-button" id="againBtn" type="button">Practice again ↻</button>
+          </div>
+          <div class="review-area">
+            <h3>Question-by-question analysis</h3>
+            <p class="review-caption">Review every submitted answer, the correct answer, and any questions left unanswered.</p>
+            <div class="table-scroll"><table class="results-table"><thead><tr><th>#</th><th>Question</th><th>Your answer</th><th>Correct answer</th><th>Result</th></tr></thead><tbody id="resultsBody"></tbody></table></div>
+          </div>
+        </div>
+        <div class="stage-footer"><span class="session-note" id="sessionNote">Your answers stay on this device.</span><button class="secondary" id="stopBtn" type="button" disabled>End session</button></div>
+      </section>
+    </main>
+  </div>
+</div>
+<script src="script.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A simple collection of interactive maths practice trainers.">
+  <title>Math Practice Hub</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/main.js" defer></script>
+</head>
+<body>
+  <header class="hero">
+    <nav class="topbar" aria-label="Main navigation">
+      <a class="wordmark" href="index.html"><span class="mark">∑</span><span>Math Practice Hub</span></a>
+      <span class="top-note">Free · Focused · Browser-based</span>
+    </nav>
+    <div class="hero-content">
+      <p class="eyebrow">YOUR PERSONAL MATHS WORKOUT</p>
+      <h1>Small practice.<br><span>Big progress.</span></h1>
+      <p class="hero-copy">Choose a trainer, set your pace, and build fluency one question at a time. No sign-in and no installation required.</p>
+      <a class="hero-cta" href="#trainers">Explore trainers <span aria-hidden="true">↓</span></a>
+    </div>
+    <div class="hero-decoration decor-one">×</div><div class="hero-decoration decor-two">%</div><div class="hero-decoration decor-three">÷</div>
+  </header>
+  <main class="content" id="trainers">
+    <div class="section-heading">
+      <div><p class="eyebrow">THE TRAINER LIBRARY</p><h2>What would you like to practise?</h2><p class="section-copy">Pick a trainer below. Each one has its own focused practice session and end-of-session review.</p></div>
+      <label class="search-wrap"><span class="sr-only">Search trainers</span><span aria-hidden="true">⌕</span><input id="trainerSearch" type="search" placeholder="Find a trainer…"></label>
+    </div>
+    <section class="trainer-grid" id="trainerGrid" aria-label="Available trainers">
+      <a class="trainer-card card-violet" href="trainers/table-trainer/index.html" data-search="tables multiplication division times tables arithmetic">
+        <div class="card-top"><span class="card-icon">×</span><span class="card-number">01 / CORE SKILLS</span></div>
+        <h3>Table Trainer</h3><p>Practise multiplication tables from 1 to 30, or sharpen division recall. Choose your table range and session style.</p>
+        <div class="tag-row"><span>Multiplication</span><span>Division</span><span>Timed mode</span></div>
+        <div class="card-bottom"><span>Open trainer</span><span class="arrow">↗</span></div>
+      </a>
+      <a class="trainer-card card-teal" href="trainers/fractions-decimals/index.html" data-search="fractions decimal conversion numerator denominator">
+        <div class="card-top"><span class="card-icon">½</span><span class="card-number">02 / NUMBER SENSE</span></div>
+        <h3>Fractions to Decimals</h3><p>Turn common fractions into decimal numbers, build speed, and review every answer at the end.</p>
+        <div class="tag-row"><span>Conversions</span><span>Decimals</span><span>Instant feedback</span></div>
+        <div class="card-bottom"><span>Open trainer</span><span class="arrow">↗</span></div>
+      </a>
+      <a class="trainer-card card-orange" href="trainers/percentage-trainer/index.html" data-search="percentages percentage of a number discounts maths">
+        <div class="card-top"><span class="card-icon">%</span><span class="card-number">03 / EVERYDAY MATHS</span></div>
+        <h3>Percentage Trainer</h3><p>Calculate percentages of numbers with shuffled questions, flexible session lengths, and answer analysis.</p>
+        <div class="tag-row"><span>Mental maths</span><span>Percentages</span><span>Practice review</span></div>
+        <div class="card-bottom"><span>Open trainer</span><span class="arrow">↗</span></div>
+      </a>
+      <div class="future-card" aria-label="More trainers can be added"><span class="future-plus">＋</span><div><strong>More trainers can live here</strong><p>Add a new folder and list it on this homepage as your practice library grows.</p></div></div>
+    </section>
+    <p class="empty-state" id="emptyState" hidden>No trainers match that search. Try another term.</p>
+  </main>
+  <footer class="site-footer"><span>Math Practice Hub</span><span>Made for independent practice.</span></footer>
+</body>
+</html>
