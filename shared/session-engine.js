@@ -110,6 +110,9 @@ function qPool(kind,difficulty,opts){
  if(difficulty==="easy")filtered=tagged.filter(x=>x.level==="easy");
  if(difficulty==="medium")filtered=tagged.filter(x=>x.level==="medium");
  if(difficulty==="hard")filtered=tagged.filter(x=>x.level==="hard");
+ // Tiny or constrained pools may not contain every difficulty tier. Do not strand the learner
+ // on an empty sprint; use the available pool instead of failing to start.
+ if(!filtered.length)filtered=tagged;
  return shuffle(filtered);
 }
 function choiceEquivalent(q,a,b){
@@ -255,8 +258,54 @@ function generatedOptions(q){
  if(values.length<4){for(const group of groups){if(values.length>=4)break;for(const candidate of U.shuffle(group)){push(candidate);if(values.length>=4)break;}}}
  // Last-resort completion is scale-aware and used only for degenerate cases (e.g. powers of ten).
  if(values.length<4&&Number.isFinite(Number(correct))){const n=Number(correct),step=q.kind==="decimal"?10**-decimalPlaces:1;for(let k=1;values.length<4&&k<100;k++){push(n-k*step);if(values.length<4)push(n+k*step)}}
+ // Unit-digit questions can only have answers 0–9. Keep all four options in that domain,
+ // preferring the misconception-based candidates above and filling from the remaining digits.
+ const isUnitDigit=trainer==="lastdigits"&&q.kind==="numeric"&&/unit digit/i.test(text);
+ if(isUnitDigit){
+  const digits=values.filter(v=>/^[0-9]$/.test(String(v)));
+  for(const v of U.shuffle(Array.from({length:10},(_,i)=>String(i)))){
+   if(digits.length>=4)break;
+   if(!digits.some(existing=>choiceEquivalent(q,existing,v)))digits.push(v);
+  }
+  return U.shuffle(digits.slice(0,4));
+ }
  return U.shuffle(values.slice(0,4));
 }
+function createAutoInputPlan(q){
+ if(!q||$("answerMode")?.value==="options"||q.kind==="multi"||q.kind==="fraction")return null;
+ const answer=String(q.answer??"").trim(),trainer=q.trainer||app?.kind||"";
+ const numeric=/^-?\d+(?:\.\d+)?$/.test(answer);
+ if(q.kind==="last2")return {type:"digits",count:2,label:"two digits"};
+ if(q.kind==="numeric"&&app?.cfg?.auto&&/^-?\d+$/.test(answer)){
+  if(trainer==="lastdigits"&&/unit digit/i.test(String(q.text||"")))return {type:"digits",count:1,label:"one digit"};
+  return {type:"digits",count:answer.replace(/\D/g,"").length,label:`${answer.replace(/\D/g,"").length} digit${answer.replace(/\D/g,"").length===1?"":"s"}`};
+ }
+ // Exact binary/text classification answers have a closed vocabulary, so the input can
+ // submit as soon as one complete accepted token has been entered.
+ if(q.kind==="choice"&&Array.isArray(q.options)&&q.options.length&&q.options.every(v=>!Number.isFinite(Number(v)))){
+  return {type:"token",tokens:q.options.map(v=>String(v).trim().toLowerCase())};
+ }
+ if((q.kind==="decimal"||q.kind==="choice")&&numeric){
+  const rounded=String(q.hint||"").match(/(?:\((\d+) Decimal|Round to (\d+) Decimal)/i);
+  if(rounded){const places=Number(rounded[1]||rounded[2]);if(Number.isInteger(places)&&places>=1&&places<=6)return {type:"decimal",places,label:`${places} decimal place${places===1?"":"s"}`};}
+  const count=answer.length;
+  if(count>0)return {type:"length",count,label:`${count} characters`};
+ }
+ return null;
+}
+function autoInputIsComplete(q,plan,value){
+ if(!plan||!String(value||"").trim())return false;
+ const input=String(value).trim();
+ if(plan.type==="digits")return /^\d+$/.test(input)&&input.length>=plan.count;
+ if(plan.type==="decimal"){
+  const m=input.match(/^\d+(?:\.(\d*))?$/);
+  return !!m&&(m[1]||"").length>=plan.places;
+ }
+ if(plan.type==="length")return /^-?\d+(?:\.\d+)?$/.test(input)&&input.length>=plan.count;
+ if(plan.type==="token")return plan.tokens.includes(input.toLowerCase());
+ return false;
+}
+function shouldHideSubmit(q,optionsMode){return optionsMode?q.kind!=="multi":!!q.autoInputPlan}
 function inputFor(q){
  const host=$("answerControl"),optionsMode=$("answerMode")?.value==="options";host.innerHTML="";
  const form=$("answerForm");form.classList.toggle("wide-answer",optionsMode&&q.kind==="multi");
@@ -275,13 +324,15 @@ function inputFor(q){
    }));
   }
  }else{
-  const placeholder=q.kind==="fraction"?"e.g. 3/8":q.kind==="multi"?"e.g. 2, 3, 5":q.kind==="decimal"?"Enter decimal":q.kind==="choice"?"Type your answer":"Your answer";
-  const inputMode=(q.kind==="fraction"||q.kind==="multi"||q.kind==="choice")?"text":"decimal";
+  const numericAnswer=/^-?\d+(?:\.\d+)?$/.test(String(q.answer??""));
+  const placeholder=q.kind==="fraction"?"e.g. 3/8":q.kind==="multi"?"e.g. 2, 3, 5":q.kind==="decimal"?"Enter decimal":q.kind==="choice"?(numericAnswer?"Enter estimate":"Type your answer"):"Your answer";
+  const inputMode=(q.kind==="fraction"||q.kind==="multi"||(q.kind==="choice"&&!numericAnswer))?"text":"decimal";
   host.innerHTML=`${q.kind==="multi"?'<p class="muted tiny">Enter all answers separated by commas (or leave blank if none apply).</p>':""}<input id="answerInput" class="answer-input" type="text" inputmode="${inputMode}" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${U.esc(placeholder)}" aria-label="Your answer">`;
  }
- const input=$("answerInput");if(input&&input.type!=="hidden"){input.addEventListener("input",()=>{if(q.kind==="numeric"&&/^-?\d+$/.test(input.value)&&q.autoDigits&&$("answerMode")?.value!=="options"&&input.value.length>=String(q.answer).length)submitCurrent()});input.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();submitCurrent()}});if(q.kind==="numeric"&&q.autoDigits&&$("answerMode")?.value!=="options")input.dataset.autosubmit="true";input.focus({preventScroll:true})}
- // Single-answer multiple choice submits on selection; multi-select still requires an explicit check.
- submitBtn.classList.toggle("hidden",optionsMode&&q.kind!=="multi");
+ const input=$("answerInput");if(input&&input.type!=="hidden"){input.addEventListener("input",()=>{if(app?.locked)return;if(autoInputIsComplete(q,q.autoInputPlan,input.value))submitCurrent()});input.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();submitCurrent()}});if(q.autoInputPlan)input.dataset.autosubmit=q.autoInputPlan.type;input.focus({preventScroll:true})}
+ // Hide Check answer only when a single choice auto-submits or typed input has a safe completion rule.
+ // Multi-select and free-form fraction answers still require explicit confirmation.
+ submitBtn.classList.toggle("hidden",shouldHideSubmit(q,optionsMode));
 }
 function renderResolvedQuestion(q, shownAnswer, isCorrect, isTimeout=false){
  const node=$("questionText");if(!node)return;node.textContent="";
@@ -308,17 +359,25 @@ function compareAnswer(q,raw){
  if(q.kind==="fraction")return U.equivalentFraction(raw,q.answer);
  if(q.kind==="decimal")return U.sameDecimal(raw,q.answer);
  if(q.kind==="last2"){const normalize=value=>{const text=String(value).trim();return /^\d+$/.test(text)?String(Number(text)):text.replace(/^0+(?=\d)/,"")};return normalize(raw)===normalize(q.answer)}
- if(q.kind==="choice")return String(raw).trim().toLowerCase()===String(q.answer).trim().toLowerCase();
- if(q.kind==="numeric")return String(raw).trim()===String(q.answer);
+ if(q.kind==="choice"){
+  const input=String(raw).trim(),expected=String(q.answer).trim();
+  if(/^-?\d+(?:\.\d+)?$/.test(input)&&/^-?\d+(?:\.\d+)?$/.test(expected))return Math.abs(Number(input)-Number(expected))<1e-9;
+  return input.toLowerCase()===expected.toLowerCase();
+ }
+ if(q.kind==="numeric"){
+  const input=String(raw).trim(),expected=String(q.answer).trim();
+  if(/^-?\d+$/.test(input)&&/^-?\d+$/.test(expected))return Number(input)===Number(expected);
+  return input===expected;
+ }
  return String(raw).trim()===String(q.answer);
 }
 let app=null;
 function mount(kind){
  const cfg=configs[kind];if(!cfg)return;app={kind,cfg,opts:null,pool:[],index:0,records:[],current:null,running:false,locked:false,deadline:0,qStarted:0,qTimer:null,clock:null,sessionStarted:0,target:0,sessionMode:"count",timeLimit:0,wrongOnly:null,streak:0,bestStreak:0};
  applySharedPrefs(kind);bindSharedPrefs();buildOptions(kind);
- const updateMode=()=>{const mode=$("sessionMode").value;$("countWrap").classList.toggle("hidden",mode!=="count");$("durationWrap").classList.toggle("hidden",mode!=="timed");$("setupHint").textContent=mode==="all"?"The selected finite question pool will be tested once, without repeats.":mode==="timed"?"Answer as many as possible before time expires.":"The session ends after the selected number of questions.";};
+ const updateMode=()=>{const mode=$("sessionMode").value;$("countWrap").classList.toggle("hidden",mode!=="count");$("durationWrap").classList.toggle("hidden",mode!=="timed");$("setupHint").textContent=mode==="all"?"The selected finite question pool will be tested once, without repeats.":mode==="timed"?"Answer as many as possible before time expires.":"The session ends after the selected number of questions.";$("setupHint").style.color="";};
  $("sessionMode").addEventListener("change",updateMode);updateMode();
- const answerModeHelp=()=>{const node=$("setupHint");if(!node)return;const mode=$("answerMode")?.value;const currentMode=$("sessionMode")?.value||"count";const base=currentMode==="all"?"The selected finite question pool will be tested once, without repeats.":currentMode==="timed"?"Answer as many as possible before time expires.":"The session ends after the selected number of questions.";node.textContent=base+(mode==="options"?" Answer format is multiple-choice.":" Answer format is typed input.")};
+ const answerModeHelp=()=>{const node=$("setupHint");if(!node)return;const mode=$("answerMode")?.value;const currentMode=$("sessionMode")?.value||"count";const base=currentMode==="all"?"The selected finite question pool will be tested once, without repeats.":currentMode==="timed"?"Answer as many as possible before time expires.":"The session ends after the selected number of questions.";node.textContent=base+(mode==="options"?" Single-answer choices submit on selection; select-all questions need Check answer.":" Fixed-length numeric answers and complete Yes/No or Prime/Composite tokens auto-submit. Fractions and select-all answers need Check answer; Enter is also available.");node.style.color=""};
  $("answerMode")?.addEventListener("change",answerModeHelp);answerModeHelp();
  $("startBtn").addEventListener("click",()=>start());
  $("answerForm").addEventListener("submit",e=>{e.preventDefault();submitCurrent()});
@@ -328,7 +387,19 @@ function mount(kind){
  renderTrainerHistory(kind);
 }
 function start(overridePool=null){
- saveSharedPrefs();saveTrainerPrefs(app.kind);clearInterval(app.clock);clearTimeout(app.qTimer);app.opts=getOpts(app.kind);app.sessionMode=$("sessionMode").value;app.pool=overridePool?U.shuffle(overridePool.slice()):qPool(app.kind,$("difficulty").value,app.opts);if(!app.pool.length){alert("No questions are available for these settings. Try another range or difficulty.");return}
+ saveSharedPrefs();saveTrainerPrefs(app.kind);
+ let nextOpts,nextMode,nextPool;
+ try{
+  nextOpts=getOpts(app.kind);nextMode=$("sessionMode").value;
+  nextPool=overridePool?U.shuffle(overridePool.slice()):qPool(app.kind,$("difficulty").value,nextOpts);
+ }catch(error){
+  const hint=$("setupHint");if(hint){hint.textContent=error&&error.message?error.message:"These settings could not generate questions. Please review them and try again.";hint.style.color="var(--bad)";}
+  return;
+ }
+ if(!nextPool.length){const hint=$("setupHint");if(hint){hint.textContent="No questions are available for these settings. Try another range or difficulty.";hint.style.color="var(--bad)";}return}
+ const setupHint=$("setupHint");if(setupHint)setupHint.style.color="";
+ clearInterval(app.clock);clearTimeout(app.qTimer);app.running=false;app.locked=false;
+ app.opts=nextOpts;app.sessionMode=nextMode;app.pool=nextPool;
  app.index=0;app.records=[];app.current=null;app.running=true;app.locked=false;app.sessionStarted=Date.now();app.streak=0;app.bestStreak=0;app.wrongOnly=!!overridePool;
  app.target=app.sessionMode==="count"?Math.max(1,Math.min(10000,intOpt("questionCount",30,1,10000))):app.pool.length;
  app.timeLimit=app.sessionMode==="timed"?Math.max(15000,Math.min(10800000,Number($("duration").value||2)*60000)):0;
@@ -346,7 +417,7 @@ function showQuestion(){
   else {finish("complete");return;}
  }
  app.current=app.pool[app.index % app.pool.length];app.locked=false;app.qStarted=Date.now();
- if(app.current.kind==="numeric"&&app.cfg.auto&&/^-?\d+$/.test(String(app.current.answer))&&$("answerMode")?.value!=="options"){app.current.autoDigits=true}else{app.current.autoDigits=false}
+ app.current.autoInputPlan=createAutoInputPlan(app.current);
  $("questionType").textContent=app.cfg.title.toUpperCase();$("questionText").textContent=app.current.text;$("questionHint").textContent=app.current.hint||"";$("feedback").className="feedback neutral";$("feedback").textContent="";$("targetHint").textContent=Number($("perQuestion").value)>0?`Target: ${$("perQuestion").value} seconds per question`:"";
  inputFor(app.current);updateStats();
  if(Number($("perQuestion").value)>0){const cap=Math.max(1,Number($("perQuestion").value))*1000;app.qTimer=setTimeout(()=>{if(app.running&&!app.locked){recordAnswer("",true,"timeout")}},cap)}

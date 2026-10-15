@@ -75,7 +75,14 @@ math-practice-hub/
 - “All possibilities once” uses the finite generated pool for the selected trainer options.
 - Timed sessions recycle a shuffled pool only after exhausting it; count-limited and all-once sessions do not intentionally repeat a question before the pool is exhausted.
 - Approximate division and optional square-root/cube-root practice have explicit rounding targets to make grading unambiguous.
-- Fraction/decimal inputs use Enter or the Check button because decimal answers can have different lengths. Numeric questions use automatic submission only when a safe integer digit count is known.
+- Fraction/decimal inputs use Enter or the Check button because decimal answers can have different lengths. Numeric questions use automatic submission when an expected digit count or explicit decimal precision is known; variable-length free-form answers keep an explicit submission path.
+
+### Answer submission and input validation (v8)
+- Unit-digit multiple-choice questions always show exactly four unique options, all from 0–9, including the correct digit. Distractors prefer the skill-specific common-error candidates, then fill from the remaining digits.
+- Typed integer questions auto-submit when the expected answer digit count is reached; unit digit uses one digit and last-two-digits uses two digits, including a leading zero when appropriate.
+- Decimal questions with a stated precision auto-submit once the requested fractional digits are entered. Exact-decimal and rounded-division answers use their expected representation length when no fixed precision instruction is present. Decimal and numeric-division grading ignores unnecessary trailing zeros.
+- Typed Yes/No and Prime/Composite questions auto-submit when a complete valid answer token is entered. Multiple-select questions and free-form fraction answers keep explicit submission because the system cannot know when a list or fraction is finished. The Enter key remains available as a fallback when a learner wants to submit an answer before reaching the automatic completion boundary.
+- The Check answer button is hidden only for answer formats with a defined auto-submit rule; it stays visible for multi-select and free-form fraction questions.
 
 ### Multiple-choice behavior (v7)
 - Single-answer multiple-choice questions submit as soon as an option is selected; the Check answer button is hidden for these questions.
