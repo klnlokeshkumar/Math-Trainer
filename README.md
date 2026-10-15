@@ -77,7 +77,17 @@ math-practice-hub/
 - Approximate division and optional square-root/cube-root practice have explicit rounding targets to make grading unambiguous.
 - Fraction/decimal inputs use Enter or the Check button because decimal answers can have different lengths. Numeric questions use automatic submission only when a safe integer digit count is known.
 
-### Multiple-choice behavior (v6)
+### Multiple-choice behavior (v7)
 - Single-answer multiple-choice questions submit as soon as an option is selected; the Check answer button is hidden for these questions.
 - The resolved answer is inserted into the question line and colored green for correct responses or red for incorrect responses. The correct choice is highlighted green, and a wrong selected choice is highlighted red.
 - Multiple-choice single-answer feedback stays visible for one second before the next question. Select-all-that-apply questions retain a Check answer button.
+- Numeric distractors are generated from skill-specific error patterns rather than a universal list of arbitrary offsets. The option order is shuffled, choices are deduplicated using the same equivalence rules as grading, and exactly one choice is correct for single-answer items.
+- Tables and multiplication use adjacent-factor mistakes; squares and cubes use nearby powers plus common operation confusions; approximate roots and decimals use rounding/place-value errors; fractions and percentages use scale, reciprocal, numerator/denominator and early-rounding errors; powers' last digits use exponent and modulo mistakes; approximate division uses rounding-direction and divisor-estimation mistakes.
+- Divisibility and prime/composite items remain Yes/No because they have two meaningful categories. Prime hunt remains a select-all item with the full candidate set. These are not forced into four choices by adding low-quality alternatives.
+- Percentage-to-fraction questions are generated only when the displayed percentage is exact at its shown precision. Repeating percentages are reserved for fraction-to-percentage questions with an explicit four-decimal rounding note, avoiding a rounded prompt with a mismatched exact fraction answer.
+- The distractors are heuristic, curriculum-informed models of plausible errors, not empirically calibrated against response data from individual learners.
+
+### Distractor-design references
+- [University of Bath: How to write effective multiple-choice questions](https://teachinghub.bath.ac.uk/guide/writing-effective-multiple-choice-questions/) — recommends plausible, misconception-based, mutually exclusive options without formatting clues.
+- [University of Waterloo: Designing multiple-choice questions](https://uwaterloo.ca/centre-for-teaching-excellence/catalogs/tip-sheets/designing-multiple-choice-questions) — recommends alternatives that are plausible and incorrect, and notes the challenge of adding extra useful distractors.
+- [INFORMS Transactions on Education: Practical guidance for writing multiple-choice test questions](https://pubsonline.informs.org/doi/full/10.1287/ited.2022.0274) — describes using numerical error patterns as distractors to reveal likely mistakes.

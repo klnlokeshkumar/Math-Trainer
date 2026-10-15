@@ -56,7 +56,7 @@ function makeQ(text,answer,extra={}){return {text:String(text),answer:String(ans
 function divRules(n){const rules=[2,3,4,5,6,8,9,10,11,12,25];return rules.filter(d=>n%d===0)}
 function qPool(kind,difficulty,opts){
  const rand=U.rand, shuffle=U.shuffle, q=[];let maxRoot=+opts.maxRoot||50;
- const add=(text,answer,extra={})=>q.push(makeQ(text,answer,extra));
+ const add=(text,answer,extra={})=>q.push(makeQ(text,answer,{trainer:kind,...extra}));
  if(kind==="table"){
   const start=intOpt("rangeStart",1,1,1000),end=intOpt("rangeEnd",20,1,1000);if(start>end)throw new Error("Factor start must be less than or equal to factor end.");
   const op=opts.operation, tables=opts.selectedTables;if(opts.tables==="custom"&&!tables.length)throw new Error("Select at least one table.");
@@ -80,7 +80,7 @@ function qPool(kind,difficulty,opts){
   arr.forEach(([n,d])=>{const val=n/d;const answer=mode==="round"?(Math.round((val+Number.EPSILON)*100)/100).toFixed(2):String(Number(val.toFixed(2)));if(mode==="exact"&&Math.abs(val-Math.round(val*100)/100)>1e-9)return;const prompt=`${n}/${d} = ?`;const hint=mode==="round"?"(2 Decimals)":"(Exact Decimal)";const expanded=val.toFixed(6).replace(/0+$/,"").replace(/\.$/,"");add(prompt,answer,{kind:"decimal",hint,explain:`${n} ÷ ${d} = ${expanded}${mode==="round"?`; rounded to 2 decimal places: ${answer}`:""}.`})});
  } else if(kind==="percent"){
   const dir=opts.direction;const fracs=[[1,2],[1,3],[1,4],[1,5],[1,6],[1,8],[1,10],[1,12],[1,16],[3,4],[2,5],[3,5],[7,8],[3,8],[5,8],[7,20],[9,20],[11,20],[13,20],[17,20],[1,25],[3,25],[7,25],[9,25]];
-  fracs.forEach(([n,d])=>{const s=U.simplify(n,d),pct=n/d*100;if(dir!=="toPercent")add(`${Number(pct.toFixed(4))}% = fraction in simplest form?`,s.text,{kind:"fraction",explain:`${Number(pct.toFixed(4))}% = ${pct}/100 = ${s.text}`});if(dir!=="toFraction")add(`${s.text} = ?%`,Number(pct.toFixed(4)),{kind:"decimal",explain:`${s.text} × 100 = ${Number(pct.toFixed(4))}%`})});
+  fracs.forEach(([n,d])=>{const s=U.simplify(n,d),pct=n/d*100,shownPct=Number(pct.toFixed(4)),hasExactDisplay=Math.abs(pct-shownPct)<1e-9;if(dir!=="toPercent"&&hasExactDisplay)add(`${shownPct}% = fraction in simplest form?`,s.text,{kind:"fraction",explain:`${shownPct}% = ${shownPct}/100 = ${s.text}`});if(dir!=="toFraction")add(`${s.text} = ?%`,shownPct,{kind:"decimal",hint:hasExactDisplay?"":"(Round to 4 Decimals)",explain:`${s.text} × 100 = ${pct.toFixed(6).replace(/0+$/,'').replace(/\.$/,'')}%; ${hasExactDisplay?"":"rounded to 4 decimal places: "+shownPct}`})});
  } else if(kind==="divisibility"){
   const ds=opts.divisorSet==="core"?[2,3,5,9,10]:[2,3,4,5,6,8,9,10,11,12,25];const type=opts.questionType;
   for(let n=100;n<=9999;n+=rand(1,7)){const d=ds[rand(0,ds.length-1)],yes=n%d===0;if(type==="multiple"){const valid=divRules(n).filter(x=>ds.includes(x));add(`Select all rules that divide ${n}`,valid.join(","),{kind:"multi",options:ds.map(String),explain:`Divisors in this rule set: ${valid.join(", ")||"none"}`})}else add(`Is ${n} divisible by ${d}?`,yes?"Yes":"No",{kind:"choice",options:["Yes","No"],explain:yes?`${n} ÷ ${d} is an integer.`:`${n} is not divisible by ${d}.`})}
@@ -88,7 +88,7 @@ function qPool(kind,difficulty,opts){
   const mode=opts.digits,baseMax=intOpt("baseMax",30,2,99);for(let b=2;b<=baseMax;b++)for(let e=2;e<=80;e++){if(mode!=="2")add(`Find the unit digit of ${b}^${e}`,String(U.powerMod(b,e,10)),{explain:`Reduce ${b}^${e} modulo 10; answer ${U.powerMod(b,e,10)}.`});if(mode!=="1"&&mode!=="product")add(`Find the last two digits of ${b}^${e}`,String(U.powerMod(b,e,100)).padStart(2,"0"),{explain:`${b}^${e} mod 100 = ${String(U.powerMod(b,e,100)).padStart(2,"0")}.`,kind:"last2"});}
   if(mode==="product")for(let a=2;a<=baseMax;a++)for(let b=2;b<=baseMax;b++)for(let e=2;e<=25;e++)add(`Find the unit digit of ${a}^${e} × ${b}^${e+1}`,String(U.powerMod(a,e,10)*U.powerMod(b,e+1,10)%10),{explain:`Only unit digits matter: ${U.powerMod(a,e,10)} × ${U.powerMod(b,e+1,10)} gives the unit digit.`});
  } else if(kind==="approxdiv"){
-  const dmax=intOpt("divisorMax",99,10,500),mode=opts.precision;for(let d=10;d<=dmax;d++)for(let qn=10;qn<=200;qn+=3){const numerator=d*qn+rand(-Math.floor(d/3),Math.floor(d/3));if(numerator<=0)continue;const exact=numerator/d;const answer=mode==="tenth"?(Math.round(exact*10)/10).toFixed(1):String(Math.round(exact));const val=Number(answer);const choices=new Set([val,mode==="tenth"?Math.round((val-0.2)*10)/10:val-2,mode==="tenth"?Math.round((val+0.2)*10)/10:val+2,mode==="tenth"?Math.round((val+0.5)*10)/10:val+1]);add(`${numerator} ÷ ${d} = ?`,answer,{kind:"choice",hint:mode==="tenth"?"(1 Decimal)":"(Nearest Integer)",options:shuffle([...choices].map(String)),explain:`Exact quotient ≈ ${exact.toFixed(3)}; rounded answer ${answer}.`})}
+  const dmax=intOpt("divisorMax",99,10,500),mode=opts.precision;for(let d=10;d<=dmax;d++)for(let qn=10;qn<=200;qn+=3){let offset=rand(-Math.floor(d/3),Math.floor(d/3));if(offset===0)offset=rand(0,1)?1:-1;const numerator=d*qn+offset;if(numerator<=0)continue;const exact=numerator/d;const answer=mode==="tenth"?(Math.round(exact*10)/10).toFixed(1):String(Math.round(exact));const divisorOffUp=numerator/(d+1),divisorOffDown=numerator/(d-1);const groups=mode==="tenth"?[[Math.floor(exact*10)/10,Math.ceil(exact*10)/10],[Math.round(exact),Math.floor(exact)],[Math.round(divisorOffUp*10)/10,Math.round(divisorOffDown*10)/10],[Number(answer)-0.1,Number(answer)+0.1]]:[[Math.floor(exact),Math.ceil(exact)],[Math.round(divisorOffUp),Math.round(divisorOffDown)],[Math.round(exact/10)*10,Math.round(exact/5)*5],[Number(answer)-1,Number(answer)+1]];const choices=[String(answer)];for(const group of groups){if(choices.length>=4)break;for(const raw of shuffle(group)){const candidate=mode==="tenth"?Number(raw).toFixed(1):String(Math.round(raw));if(!choices.some(x=>Number(x)===Number(candidate))){choices.push(candidate);break}}}for(let step=1;choices.length<4&&step<10;step++){for(const raw of mode==="tenth"?[Number(answer)-step/10,Number(answer)+step/10]:[Number(answer)-step,Number(answer)+step]){const candidate=mode==="tenth"?raw.toFixed(1):String(Math.round(raw));if(!choices.some(x=>Number(x)===Number(candidate))&&choices.length<4)choices.push(candidate)}}add(`${numerator} ÷ ${d} = ?`,answer,{kind:"choice",hint:mode==="tenth"?"(1 Decimal)":"(Nearest Integer)",options:shuffle(choices),explain:`Exact quotient ≈ ${exact.toFixed(3)}; rounded answer ${answer}.`})}
  } else if(kind==="primehunt"){
   const size=+opts.gridSize||20;const nums=Array.from({length:200},(_,i)=>i+1);
   const rounds=size===200?1:Math.min(100,Math.max(30,Math.floor(200/size)*6));
@@ -122,27 +122,139 @@ function choiceEquivalent(q,a,b){
 }
 function generatedOptions(q){
  if(Array.isArray(q.options)&&q.options.length)return U.shuffle(q.options.map(String));
- const correct=String(q.answer),values=[correct];
- const push=v=>{if(v===null||v===undefined||!String(v).trim())return;const text=String(v);if(!values.some(existing=>choiceEquivalent(q,existing,text)))values.push(text)};
- if(q.kind==="fraction"){
-  const match=correct.match(/^(-?\d+)\/(\d+)$/);
-  if(match){const n=Number(match[1]),d=Number(match[2]);[U.simplify(n+1,d).text,U.simplify(Math.max(0,n-1),d).text,U.simplify(n,d+1).text,U.simplify(n+1,d+1).text,U.simplify(n+2,d).text,U.simplify(n,d+2).text].forEach(push);}
-  ["1/2","1/3","1/4","2/3","3/4","1/5","2/5","3/5","4/5","1/8"].forEach(push);
- }else{
-  const number=Number(correct);
-  if(Number.isFinite(number)){
-   const isDecimal=q.kind==="decimal",isLastTwo=q.kind==="last2";
-   const decimalPlaces=isDecimal?(correct.split(".")[1]||"").length:0;
-   const unit=isDecimal?Math.pow(10,-Math.max(1,decimalPlaces)):1;
-   let deltas;
-   if(isLastTwo)deltas=[1,-1,2,-2,5,-5,10,-10,20,-20,25,-25];
-   else if(isDecimal)deltas=[unit,-unit,2*unit,-2*unit,5*unit,-5*unit,10*unit,-10*unit,0.1,-0.1,1,-1];
-   else {const magnitude=Math.pow(10,Math.max(0,String(Math.trunc(Math.abs(number))).length-2));deltas=[1,-1,2,-2,10,-10,magnitude,-magnitude,3,-3,100,-100];}
-   deltas.forEach(delta=>{let candidate=number+delta;if(isLastTwo)candidate=((Math.round(candidate)%100)+100)%100;else if(!isDecimal)candidate=Math.round(candidate);if(candidate<0&&number>=0)return;let text=isDecimal?candidate.toFixed(Math.min(6,Math.max(1,decimalPlaces))):isLastTwo?String(Math.round(candidate)).padStart(2,"0"):String(Math.round(candidate));push(text)});
+ const text=String(q.text||""),trainer=q.trainer||"",correct=String(q.answer);
+ const groups=[];
+ const pushGroup=(...values)=>groups.push(values);
+ const asFraction=(n,d)=>{if(!Number.isFinite(n)||!Number.isFinite(d)||d===0)return null;return U.simplify(Math.trunc(n),Math.trunc(d)).text};
+ const fractionToPercentHint=trainer==="percent"&&/^\s*\d+\s*\/\s*\d+\s*=\s*\?%/.test(text);
+ const decimalPlaces=(()=>{const m=String(q.hint||"").match(/\((\d+) Decimal/i);if(m)return Math.max(1,Math.min(6,+m[1]));if(trainer==="fracdec")return 2;const existing=(correct.split(".")[1]||"").length;if(fractionToPercentHint)return Math.min(6,existing);return Math.min(6,existing||2)})();
+ const fmt=(v)=>{
+  if(v===null||v===undefined)return null;
+  if(q.kind==="fraction")return String(v);
+  if(!Number.isFinite(Number(v)))return null;
+  const n=Number(v);
+  if(q.kind==="last2")return String(((Math.round(n)%100)+100)%100).padStart(2,"0");
+  if(trainer==="lastdigits"&&q.kind==="numeric"&&/unit digit/i.test(text))return String(((Math.round(n)%10)+10)%10);
+  if(q.kind==="decimal"&&(trainer==="fracdec"||/\(\d+ Decimal/i.test(String(q.hint||""))||fractionToPercentHint))return n.toFixed(decimalPlaces);
+  if(q.kind==="decimal")return String(Number(n.toFixed(Math.max(1,decimalPlaces))));
+  if(Number.isInteger(n))return String(n);
+  return String(Number(n.toFixed(2)));
+ };
+ const rootMatch=text.match(/[√∛]\s*(\d+)\s*=\s*\?/);
+ const multMatch=text.match(/(\d+)\s*×\s*(\d+)\s*=\s*\?/);
+ const divMatch=text.match(/(\d+)\s*÷\s*(\d+)\s*=\s*\?/);
+ const squareMatch=text.match(/(\d+)\s*²\s*=\s*\?/);
+ const cubeMatch=text.match(/(\d+)\s*³\s*=\s*\?/);
+ const unitProduct=text.match(/unit digit of\s+(\d+)\^(\d+)\s*×\s*(\d+)\^(\d+)/i);
+ const powerMatch=text.match(/(?:unit digit|last two digits) of\s+(\d+)\^(\d+)/i);
+ const fracMatch=text.match(/^\s*(\d+)\s*\/\s*(\d+)\s*=\s*\?/);
+ const pctToFraction=text.match(/^\s*([\d.]+)%\s*=\s*fraction/i);
+ const fractionToPct=text.match(/^\s*(\d+)\s*\/\s*(\d+)\s*=\s*\?%/);
+ const rootDecimal=q.kind==="decimal"&&rootMatch&&(/[√∛]/.test(text));
+ const exactSquareRoot=!!rootMatch&&q.kind!=="decimal"&&!text.includes("∛");
+
+ // Root estimates: deliberately target rounding slips, coarser rounding, and neighbouring roots.
+ if(rootDecimal){
+  const rad=Number(rootMatch[1]),actual=text.includes("∛")?Math.cbrt(rad):Math.sqrt(rad),p=decimalPlaces,scale=10**p,rounded=Number(correct);
+  pushGroup(rounded-1/scale,rounded+1/scale);
+  const coarseScale=10**Math.max(0,p-1);
+  pushGroup(Number((Math.round(actual*coarseScale)/coarseScale).toFixed(p)),Number((Math.floor(actual*coarseScale)/coarseScale).toFixed(p)));
+  pushGroup(Math.round(actual),Math.floor(actual*10)/10);
+  pushGroup(rounded-2/scale,rounded+2/scale);
+ }
+ // Fractions -> decimals: common denominator/numerator reversal, place-value shifts, and early rounding.
+ else if(q.kind==="decimal"&&fracMatch&&trainer==="fracdec"){
+  const n=+fracMatch[1],d=+fracMatch[2],actual=n/d;
+  pushGroup(Math.round(actual*10)/10,Math.floor(actual*10)/10);
+  pushGroup(d/n,actual*10,actual/10);
+  pushGroup(Math.round(actual*100)/100,(Math.round(actual*100)+1)/100,(Math.round(actual*100)-1)/100);
+  pushGroup((n/(10**String(d).length)),(d/(10**String(n).length)));
+ }
+ // Fraction -> percent: forgetting ×100, multiplying by 10 only, or reversing the fraction.
+ else if(q.kind==="decimal"&&fractionToPct&&trainer==="percent"){
+  const n=+fractionToPct[1],d=+fractionToPct[2],actual=n/d*100;
+  pushGroup(n/d,n/d*10);
+  pushGroup(d/n*100,100/(n/d));
+  pushGroup(n, d, actual/10, actual*10);
+  pushGroup(actual-1,actual+1);
+ }
+ // Integer percent -> fraction: scale by 10 instead of 100, reverse the ratio, or use the percent as a whole number.
+ else if(q.kind==="fraction"&&pctToFraction&&trainer==="percent"){
+  const p=Number(pctToFraction[1]),f=U.normFraction(correct);if(f){
+   pushGroup(asFraction(f.d,f.n));
+   pushGroup(asFraction(Math.round(p*10),100),asFraction(Math.round(p),10));
+   pushGroup(asFraction(Math.round(p),10),asFraction(Math.round(p),1000));
+   pushGroup(asFraction(f.n+1,f.d),asFraction(Math.max(1,f.n-1),f.d));
+   pushGroup(asFraction(f.n,f.d+1),asFraction(f.n,Math.max(1,f.d-1)));
   }
  }
- // Add a few distant candidates as a fallback for answers with a narrow number range.
- if(values.length<4&&Number.isFinite(Number(correct))){const n=Number(correct);for(let k=3;values.length<4&&k<100;k++){const v=q.kind==="decimal"?n+k/100:n+k;if(v>=0)push(q.kind==="decimal"?v.toFixed(Math.min(6,Math.max(1,(correct.split(".")[1]||"").length))):q.kind==="last2"?String(Math.round(v)%100).padStart(2,"0"):String(Math.round(v)));}}
+ // Plain fractions: one-number changes, numerator/denominator reversal and denominator scaling errors.
+ else if(q.kind==="fraction"){
+  const f=U.normFraction(correct);if(f){pushGroup(asFraction(f.d,f.n));pushGroup(asFraction(f.n+1,f.d),asFraction(Math.max(0,f.n-1),f.d));pushGroup(asFraction(f.n,f.d+1),asFraction(f.n,Math.max(1,f.d-1)));pushGroup(asFraction(f.n*2,f.d),asFraction(f.n,f.d*2));}
+ }
+ // Squares: neighbouring square numbers and the classic error of doubling instead of squaring.
+ else if(squareMatch){
+  const n=+squareMatch[1];pushGroup((n-1)**2,(n+1)**2);pushGroup(2*n);pushGroup(n*(n-1),n*(n+1));
+ }
+ // Cubes: confusing cube with square or triple, plus neighbouring cubes.
+ else if(cubeMatch){
+  const n=+cubeMatch[1];pushGroup(n*n,3*n);pushGroup((n-1)**3,(n+1)**3);pushGroup(n*n*(n-1),n*n*(n+1));
+ }
+ // Exact square/cube roots: adjacent perfect powers / adjacent integer roots.
+ else if(rootMatch&&q.kind!=="decimal"){
+  const rad=+rootMatch[1],isCube=text.includes("∛"),actual=isCube?Math.round(Math.cbrt(rad)):Math.round(Math.sqrt(rad));
+  pushGroup(actual-1,actual+1);
+  if(isCube){pushGroup(Math.round(Math.sqrt(rad)),actual*actual,3*actual);pushGroup(actual-2,actual+2);}
+  else {pushGroup(-actual);pushGroup(actual-2,actual+2);}
+ }
+ // Last digits: use common exponent/modulo mistakes (only the unit digit, wrong exponent, or multiplication).
+ else if(unitProduct){
+  const a=+unitProduct[1],e=+unitProduct[2],b=+unitProduct[3],f=+unitProduct[4];
+  pushGroup(U.powerMod(a,e,10));pushGroup(U.powerMod(b,f,10));
+  pushGroup(((a%10)*(b%10))%10,((a*e)%10)*((b*f)%10)%10);
+  pushGroup(U.powerMod(a,e-1,10)*U.powerMod(b,f,10)%10,U.powerMod(a,e,10)*U.powerMod(b,f-1,10)%10);
+  pushGroup((U.powerMod(a,e,10)+U.powerMod(b,f,10))%10);
+ }
+ else if(powerMatch){
+  const base=+powerMatch[1],exp=+powerMatch[2],mod=text.includes("last two digits")?100:10;
+  pushGroup(U.powerMod(base,exp,10));
+  pushGroup((base*exp)%mod);
+  pushGroup(U.powerMod(base,Math.max(1,exp-1),mod),U.powerMod(base,exp+1,mod));
+  if(mod===100)pushGroup(base%100,U.powerMod(base,2,100),U.powerMod(base,Math.max(1,exp-2),100));
+  else pushGroup(base%10,(base+exp)%10);
+ }
+ // Multiplication: neighbouring factors and (for two-digit products) an omitted-place-value partial product.
+ else if(multMatch){
+  const a=+multMatch[1],b=+multMatch[2];
+  pushGroup(a*(b-1),a*(b+1));pushGroup((a-1)*b,(a+1)*b);
+  if(trainer==="multiply2"&&a>=10&&b>=10){const omittedCross=Math.floor(a/10)*10*b+(a%10)*(b%10);pushGroup(omittedCross,Math.floor(a/10)*Math.floor(b/10)*100+(a%10)*(b%10));pushGroup((a%10)*(b%10),a*(Math.floor(b/10)*10));}
+  else {pushGroup(a*(b-2),a*(b+2));pushGroup((a-2)*b,(a+2)*b);}
+ }
+ // Division table facts: off-by-one quotient/multiple and common operation/remainder confusions.
+ else if(divMatch){
+  const a=+divMatch[1],b=+divMatch[2],answer=Number(correct),exact=a/b;
+  pushGroup(answer-1,answer+1);pushGroup(Math.round(a/(b-1)),Math.round(a/(b+1)));
+  pushGroup(Math.round(answer/2),answer*2);pushGroup(Math.floor(exact),Math.ceil(exact));
+ }
+ // Generic numerical questions: first use place-value or rounding errors, then scale-aware nearby values.
+ else if(Number.isFinite(Number(correct))){
+  const n=Number(correct),isDecimal=q.kind==="decimal",scale=isDecimal?10**decimalPlaces:1;
+  pushGroup(Math.round(n*scale)/scale+1/scale,Math.round(n*scale)/scale-1/scale);
+  pushGroup(Math.round(n/10)*10,Math.round(n/100)*100);
+  pushGroup(n*10,n/10);
+  pushGroup(n+1,n-1,n+2,n-2);
+ }
+
+ const values=[];
+ const push=v=>{const textValue=fmt(v);if(textValue===null||!String(textValue).trim())return;if(q.kind!=="last2"&&Number(textValue)<0&&Number(correct)>=0&&!exactSquareRoot)return;if(q.kind!=="last2"&&trainer!=="lastdigits"&&Number(textValue)===0&&Number(correct)>0&&!exactSquareRoot)return;if(values.some(existing=>choiceEquivalent(q,existing,textValue)))return;values.push(textValue)};
+ push(correct);
+ // One representative from each misconception family creates varied, interpretable distractors.
+ for(const group of groups){if(values.length>=4)break;for(const candidate of U.shuffle(group)){const before=values.length;push(candidate);if(values.length>before)break;}}
+ // If a misconception family collapses to duplicates (small roots or powers of ten),
+ // reuse distinct candidates from the existing domain-specific families before falling back.
+ if(values.length<4){for(const group of groups){if(values.length>=4)break;for(const candidate of U.shuffle(group)){push(candidate);if(values.length>=4)break;}}}
+ // Last-resort completion is scale-aware and used only for degenerate cases (e.g. powers of ten).
+ if(values.length<4&&Number.isFinite(Number(correct))){const n=Number(correct),step=q.kind==="decimal"?10**-decimalPlaces:1;for(let k=1;values.length<4&&k<100;k++){push(n-k*step);if(values.length<4)push(n+k*step)}}
  return U.shuffle(values.slice(0,4));
 }
 function inputFor(q){
