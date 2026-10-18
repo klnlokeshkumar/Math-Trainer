@@ -29,19 +29,30 @@ const configs={
  lastdigits:{title:"Unit and last two digits",kind:"numeric",auto:true,options:[{id:"digits",label:"Find",type:"select",choices:[["1","Unit digit"],["2","Last two digits"],["mixed","Mixed"],["product","Product of powers (unit digit)"]],value:"mixed"},{id:"baseMax",label:"Maximum base",type:"number",min:2,max:99,value:30}]},
  approxdiv:{title:"Approximate division",kind:"choice",auto:false,options:[{id:"precision",label:"Estimate to",type:"select",choices:[["integer","Nearest integer"],["tenth","Nearest tenth"]],value:"integer"},{id:"divisorMax",label:"Maximum divisor",type:"number",min:10,max:500,value:99}]},
  primehunt:{title:"Prime hunt: 1–200",kind:"choice",auto:false,options:[{id:"gridSize",label:"Numbers per round",type:"select",choices:[["20","20 numbers"],["50","50 numbers"],["200","Full 1–200 grid"]],value:"20"}]},
- primetest:{title:"Prime or composite?",kind:"choice",auto:false,options:[{id:"numberMax",label:"Maximum number",type:"select",choices:[["100","Up to 100"],["200","Up to 200"],["500","Up to 500"],["1000","Up to 1000"]],value:"200"}]}
+ primetest:{title:"Prime or composite?",kind:"choice",auto:false,options:[{id:"numberMax",label:"Maximum number",type:"select",choices:[["100","Up to 100"],["200","Up to 200"],["500","Up to 500"],["1000","Up to 1000"]],value:"200"}]},
+ alphabetreasoning:{title:"Alphabet–number reasoning",kind:"choice",auto:false,options:[
+  {id:"questionType",label:"Question type",type:"select",choices:[["letterToNumber","Letter → number (A–Z = 1–26)"],["numberToLetter","Number → letter (1–32)"]],value:"letterToNumber"}
+ ]}
 };
 function readStoredObject(key){try{const value=JSON.parse(localStorage.getItem(key)||"{}");return value&&typeof value==="object"&&!Array.isArray(value)?value:{}}catch(e){return {}}}
 function writeStoredObject(key,value){try{localStorage.setItem(key,JSON.stringify(value))}catch(e){}}
 function loadHistory(){try{const v=JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]");return Array.isArray(v)?v:[]}catch(e){return []}}
 function saveHistory(v){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(v.slice(-500)))}catch(e){}}
-function optionValue(id){const el=$(id);return el?el.value:null}
-function setStoredControl(id,value){const el=$(id);if(!el||value===undefined||value===null||value==="")return;if(el.tagName==="SELECT"){if([...el.options].some(o=>o.value===String(value)))el.value=String(value);return;}if(el.type==="number"){const n=Number(value),min=el.min===""?-Infinity:Number(el.min),max=el.max===""?Infinity:Number(el.max);if(Number.isFinite(n)&&n>=min&&n<=max)el.value=String(value);return;}el.value=String(value)}
+function optionElement(id){
+ const host=$("trainerOptions");
+ if(host){
+  const scoped=[...host.querySelectorAll("[data-option]")].find(el=>el.dataset.option===String(id));
+  if(scoped)return scoped;
+ }
+ return $(id);
+}
+function optionValue(id){const el=optionElement(id);return el?el.value:null}
+function setStoredControl(id,value){const el=optionElement(id);if(!el||value===undefined||value===null||value==="")return;if(el.tagName==="SELECT"){if([...el.options].some(o=>o.value===String(value)))el.value=String(value);return;}if(el.type==="number"){const n=Number(value),min=el.min===""?-Infinity:Number(el.min),max=el.max===""?Infinity:Number(el.max);if(Number.isFinite(n)&&n>=min&&n<=max)el.value=String(value);return;}el.value=String(value)}
 function loadSharedPrefs(){return readStoredObject(SHARED_PREFS_KEY)}
-function applySharedPrefs(kind){const prefs=loadSharedPrefs();if(!Object.prototype.hasOwnProperty.call(prefs,"answerMode")){const defaults={table:"input",multiply2:"input",squares:"input",cubes:"input",fracdec:"input",percent:"input",divisibility:"options",lastdigits:"input",approxdiv:"options",primehunt:"options",primetest:"options"};setStoredControl("answerMode",defaults[kind]||"input");}["answerMode","difficulty","sessionMode","questionCount","duration","perQuestion"].forEach(id=>setStoredControl(id,prefs[id]));}
-function saveSharedPrefs(){const prefs=loadSharedPrefs();["answerMode","difficulty","sessionMode","questionCount","duration","perQuestion"].forEach(id=>{const el=$(id);if(el&&el.value!=="")prefs[id]=el.value;});if($("rootMode"))prefs.rootMode=$("rootMode").value;if($("rootPrecision"))prefs.rootPrecision=$("rootPrecision").value;if(app&&(app.kind==="squares"||app.kind==="cubes")&&$("direction")){const direction=$("direction").value;prefs.rootQuestionType=direction==="mixed"?"mixed":direction==="root"?"root":"power";}writeStoredObject(SHARED_PREFS_KEY,prefs)}
+function applySharedPrefs(kind){const prefs=loadSharedPrefs();if(!Object.prototype.hasOwnProperty.call(prefs,"answerMode")){const defaults={table:"input",multiply2:"input",squares:"input",cubes:"input",fracdec:"input",percent:"input",divisibility:"options",lastdigits:"input",approxdiv:"options",primehunt:"options",primetest:"options",alphabetreasoning:"input"};setStoredControl("answerMode",defaults[kind]||"input");}["answerMode","difficulty","sessionMode","questionCount","duration","perQuestion"].forEach(id=>setStoredControl(id,prefs[id]));}
+function saveSharedPrefs(){const prefs=loadSharedPrefs();["answerMode","difficulty","sessionMode","questionCount","duration","perQuestion"].forEach(id=>{const el=$(id);if(el&&el.value!=="")prefs[id]=el.value;});if(optionElement("rootMode"))prefs.rootMode=optionElement("rootMode").value;if(optionElement("rootPrecision"))prefs.rootPrecision=optionElement("rootPrecision").value;if(app&&(app.kind==="squares"||app.kind==="cubes")&&optionElement("direction")){const direction=optionElement("direction").value;prefs.rootQuestionType=direction==="mixed"?"mixed":direction==="root"?"root":"power";}writeStoredObject(SHARED_PREFS_KEY,prefs)}
 function loadTrainerPrefs(){return readStoredObject(TRAINER_PREFS_KEY)}
-function saveTrainerPrefs(kind){const all=loadTrainerPrefs(),prefs={...(all[kind]||{})};(configs[kind]?.options||[]).forEach(o=>{const el=$(o.id);if(el&&el.value!=="")prefs[o.id]=el.value;});if(kind==="table"&&$("tableChecks"))prefs.selectedTables=[...$("tableChecks").querySelectorAll("input:checked")].map(el=>+el.value);all[kind]=prefs;writeStoredObject(TRAINER_PREFS_KEY,all)}
+function saveTrainerPrefs(kind){const all=loadTrainerPrefs(),prefs={...(all[kind]||{})};(configs[kind]?.options||[]).forEach(o=>{const el=optionElement(o.id);if(el&&el.value!=="")prefs[o.id]=el.value;});if(kind==="table"&&$("tableChecks"))prefs.selectedTables=[...$("tableChecks").querySelectorAll("input:checked")].map(el=>+el.value);all[kind]=prefs;writeStoredObject(TRAINER_PREFS_KEY,all)}
 function bindSharedPrefs(){["answerMode","difficulty","sessionMode","questionCount","duration","perQuestion"].forEach(id=>{const el=$(id);if(!el)return;el.addEventListener("change",saveSharedPrefs);if(el.type==="number")el.addEventListener("input",saveSharedPrefs);});}
 function intOpt(id,def,min=1,max=100000){const v=parseInt(optionValue(id),10);return Number.isFinite(v)?Math.min(max,Math.max(min,v)):def}
 function selectOption(label,choices,value,attrs=""){return `<label ${attrs}>${U.esc(label)}<select data-option="${U.esc(value.id)}" id="${U.esc(value.id)}">${value.choices.map(c=>`<option value="${U.esc(c[0])}" ${c[0]===value.value?"selected":""}>${U.esc(c[1])}</option>`).join("")}</select></label>`}
@@ -104,6 +115,31 @@ function qPool(kind,difficulty,opts){
   }
  } else if(kind==="primetest"){
   const max=+(opts.numberMax||200);for(let n=2;n<=max;n++){const p=U.isPrime(n),pair=U.factorPair(n);add(`Is ${n} prime or composite?`,p?"Prime":"Composite",{kind:"choice",options:["Prime","Composite"],explain:p?`${n} has no divisor from 2 through √${n}.`: `${n} = ${pair[0]} × ${pair[1]}.`})}
+ } else if(kind==="alphabetreasoning"){
+  const mode=opts.questionType==="numberToLetter"?"numberToLetter":"letterToNumber";
+  const alphabet="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const addReasoning=(text,answer,options,explain)=>add(text,answer,{kind:"choice",options:U.shuffle(options),explain});
+  const unique=(values)=>[...new Set(values)];
+  // Letter → number only uses the ordinary alphabet positions 1–26.
+  if(mode==="letterToNumber"){
+   for(let n=1;n<=26;n++){
+    const letter=alphabet[n-1];
+    const candidates=unique([n-1,n+1,n-2,n+2,((n-1+13)%26)+1,27-n,((n-1+7)%26)+1])
+      .filter(v=>Number.isInteger(v)&&v>=1&&v<=26&&v!==n);
+    const options=unique([n,...candidates]).slice(0,4);
+    for(let fallback=1;options.length<4&&fallback<=26;fallback++)if(!options.includes(fallback))options.push(fallback);
+    addReasoning(`${letter} = ?`,String(n),options.map(String),`Alphabet position: ${letter} is letter ${n} (A = 1, Z = 26).`);
+   }
+  } else {
+   // Number → letter covers 1–32 exactly, so it includes the wrap Z26 → A27 through F32.
+   for(let n=1;n<=32;n++){
+    const idx=(n-1)%26,letter=alphabet[idx];
+    const candidateIndexes=unique([idx-1,idx+1,idx+2,idx-2,idx+13].map(v=>(v+26)%26).filter(v=>v!==idx));
+    const options=unique([letter,...candidateIndexes.map(i=>alphabet[i])]).slice(0,4);
+    for(let i=0;options.length<4&&i<26;i++)if(!options.includes(alphabet[i]))options.push(alphabet[i]);
+    addReasoning(`${n} = ?`,letter,options,`${n} maps to ${letter}: 1 = A, 26 = Z, 27 = A, 28 = B, and 32 = F.`);
+   }
+  }
  }
  // difficulty filters keep a meaningful finite pool; progressive is mixed and uses all levels.
  const tagged=q.map((item,i)=>({...item,level:kind==="multiply2"?(Math.max(...item.text.match(/\d+/g).map(Number))<35?"easy":Math.max(...item.text.match(/\d+/g).map(Number))<70?"medium":"hard"):i%3===0?"easy":i%3===1?"medium":"hard"}));
@@ -283,6 +319,7 @@ function createAutoInputPlan(q){
  }
  // Exact binary/text classification answers have a closed vocabulary, so the input can
  // submit as soon as one complete accepted token has been entered.
+ if(trainer==="alphabetreasoning"&&!numeric)return {type:"token",tokens:Array.from("ABCDEFGHIJKLMNOPQRSTUVWXYZ",v=>v.toLowerCase())};
  if(q.kind==="choice"&&Array.isArray(q.options)&&q.options.length&&q.options.every(v=>!Number.isFinite(Number(v)))){
   return {type:"token",tokens:q.options.map(v=>String(v).trim().toLowerCase())};
  }
@@ -326,8 +363,8 @@ function inputFor(q){
   }
  }else{
   const numericAnswer=/^-?\d+(?:\.\d+)?$/.test(String(q.answer??""));
-  const placeholder=q.kind==="fraction"?"e.g. 3/8":q.kind==="multi"?"e.g. 2, 3, 5":q.kind==="decimal"?"Enter decimal":q.kind==="choice"?(numericAnswer?"Enter estimate":"Type your answer"):"Your answer";
-  const inputMode=(q.kind==="fraction"||q.kind==="multi"||(q.kind==="choice"&&!numericAnswer))?"text":"decimal";
+  const placeholder=q.trainer==="alphabetreasoning"?(numericAnswer?"Enter number (1–26)":"Enter letter (A–Z)"):q.kind==="fraction"?"e.g. 3/8":q.kind==="multi"?"e.g. 2, 3, 5":q.kind==="decimal"?"Enter decimal":q.kind==="choice"?(numericAnswer?"Enter estimate":"Type your answer"):"Your answer";
+  const inputMode=q.trainer==="alphabetreasoning"?(numericAnswer?"numeric":"text"):(q.kind==="fraction"||q.kind==="multi"||(q.kind==="choice"&&!numericAnswer))?"text":"decimal";
   host.innerHTML=`${q.kind==="multi"?'<p class="muted tiny">Enter all answers separated by commas (or leave blank if none apply).</p>':""}<input id="answerInput" class="answer-input" type="text" inputmode="${inputMode}" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${U.esc(placeholder)}" aria-label="Your answer">`;
  }
  const input=$("answerInput");if(input&&input.type!=="hidden"){input.addEventListener("input",()=>{if(app?.locked)return;if(autoInputIsComplete(q,q.autoInputPlan,input.value))submitCurrent()});input.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();submitCurrent()}});if(q.autoInputPlan)input.dataset.autosubmit=q.autoInputPlan.type;input.focus({preventScroll:true})}
@@ -339,13 +376,19 @@ function renderResolvedQuestion(q, shownAnswer, isCorrect, isTimeout=false){
  const node=$("questionText");if(!node)return;node.textContent="";
  const source=String(q.text||"");const idx=source.lastIndexOf("?");
  const before=idx>=0?source.slice(0,idx):source;const after=idx>=0?source.slice(idx+1):"";
- const equationPlaceholder=idx>=0&&(/=\s*$/.test(before));
+ const equationPlaceholder=idx>=0&&/=\s*$/.test(before);
+ const inlinePlaceholder=idx>=0&&q.inlineAnswer===true;
  const addAnswer=(value,className,del=false)=>{const span=document.createElement("span");span.className=className;span.textContent=String(value);if(del)span.style.textDecoration="line-through";node.appendChild(span)};
  const wrongValue=String(shownAnswer??"").trim()||"No answer";
  if(equationPlaceholder){
   node.appendChild(document.createTextNode(before));
   if(!isCorrect&&!isTimeout){addAnswer(wrongValue+after,"answer-reveal-bad",true);node.appendChild(document.createTextNode(" "));}
   addAnswer(String(q.answer??"")+(String(q.answer??"").trim()?after:""),"answer-reveal-good");
+ }else if(inlinePlaceholder){
+  node.appendChild(document.createTextNode(before));
+  if(!isCorrect&&!isTimeout){addAnswer(wrongValue,"answer-reveal-bad",true);node.appendChild(document.createTextNode(" "));}
+  addAnswer(String(q.answer??"").trim()||"None","answer-reveal-good");
+  node.appendChild(document.createTextNode(after));
  }else{
   node.appendChild(document.createTextNode(source));
   node.appendChild(document.createTextNode(" — "));
@@ -381,12 +424,21 @@ function mount(kind){
  $("startBtn").addEventListener("click",()=>start());
  $("answerForm").addEventListener("submit",e=>{e.preventDefault();submitCurrent()});
  $("endBtn").addEventListener("click",()=>{if(app.running)finish("ended")});
- $("restartBtn").addEventListener("click",()=>{ $("practicePanel").scrollIntoView({behavior:"smooth",block:"start"});start()});
+ $("restartBtn").addEventListener("click",()=>{
+  saveSharedPrefs();saveTrainerPrefs(app.kind);
+  $("startBtn").textContent="Start sprint →";
+  $("setupHint").textContent="Settings are ready. Adjust the question type if needed, then start a new sprint.";
+  $("setupHint").style.color="";
+  document.querySelector(".setup-panel")?.scrollIntoView({behavior:"smooth",block:"start"});
+  $("questionArea").classList.add("hidden");$("resultsArea").classList.remove("hidden");
+ });
  $("retryWrongBtn").addEventListener("click",()=>{const missed=app.records.filter(r=>r.status!=="correct").map(r=>r.q);if(!missed.length)return;start(missed)});
  renderTrainerHistory(kind);
 }
 function start(overridePool=null){
  saveSharedPrefs();saveTrainerPrefs(app.kind);
+ // Keep the live settings controls mounted across sprints. Rebuilding them here can
+ // reset the user's current selection when browser storage is unavailable.
  let nextOpts,nextMode,nextPool;
  try{
   nextOpts=getOpts(app.kind);nextMode=$("sessionMode").value;
@@ -417,7 +469,7 @@ function showQuestion(){
  }
  app.current=app.pool[app.index % app.pool.length];app.locked=false;app.qStarted=Date.now();
  app.current.autoInputPlan=createAutoInputPlan(app.current);
- $("questionType").textContent=app.cfg.title.toUpperCase();$("questionText").textContent=app.current.text;$("questionHint").textContent=questionSubtext(app.current);$("questionHint").classList.toggle("hidden",!questionSubtext(app.current));$("feedback").className="feedback neutral";$("feedback").textContent="";$("targetHint").textContent=Number($("perQuestion").value)>0?`Target: ${$("perQuestion").value} seconds per question`:"";
+ $("questionCategory").textContent=app.cfg.title.toUpperCase();$("questionText").textContent=app.current.text;$("questionHint").textContent=questionSubtext(app.current);$("questionHint").classList.toggle("hidden",!questionSubtext(app.current));$("feedback").className="feedback neutral";$("feedback").textContent="";$("targetHint").textContent=Number($("perQuestion").value)>0?`Target: ${$("perQuestion").value} seconds per question`:"";
  inputFor(app.current);updateStats();
  if(Number($("perQuestion").value)>0){const cap=Math.max(1,Number($("perQuestion").value))*1000;app.qTimer=setTimeout(()=>{if(app.running&&!app.locked){recordAnswer("",true,"timeout")}},cap)}
 }
@@ -471,7 +523,7 @@ function finish(reason){
  const slow=records.filter(r=>r.status!=="correct").length;const insight=slow?`${slow} question${slow===1?" needs":"s need"} another look. Retry missed questions to reinforce the exact skills that slowed you down.`:"Great work — all recorded answers were correct. Increase difficulty or shorten your target time to build speed.";
  $("analysisInsight").textContent=insight;
  $("reviewBody").innerHTML=records.map((r,i)=>`<tr><td>${i+1}</td><td>${U.esc(r.question)}${r.hint?`<div class="muted tiny">${U.esc(r.hint)}</div>`:""}${r.explanation?`<div class="muted tiny">${U.esc(r.explanation)}</div>`:""}</td><td>${U.esc(r.userAnswer||"—")}</td><td>${U.esc(r.correctAnswer)}</td><td class="${r.status==="correct"?"result-good":r.status==="wrong"?"result-bad":"result-skip"}">${r.status==="correct"?"Correct":r.status==="wrong"?"Wrong":"Unanswered"}</td><td>${(r.elapsedMs/1000).toFixed(1)}s</td></tr>`).join("");
- const history=loadHistory();const entry={id:`${Date.now()}-${Math.random().toString(36).slice(2,8)}`,trainer:app.kind,title:app.cfg.title,date:new Date().toISOString(),reason,mode:app.sessionMode,questions:records.length,correct,wrong,unanswered:skipped,accuracy,elapsedMs:elapsed,avgMs:avg,bestStreak:app.bestStreak,records:records.map(r=>({question:r.question,hint:r.hint,userAnswer:r.userAnswer,correctAnswer:r.correctAnswer,status:r.status,elapsedMs:r.elapsedMs,explanation:r.explanation}))};history.push(entry);saveHistory(history);$("progressBar").style.width="100%";$("submitBtn").disabled=false;$("retryWrongBtn").classList.toggle("hidden",!records.some(r=>r.status!=="correct"));renderTrainerHistory(app.kind);if(global.MathSprintHub&&global.MathSprintHub.refresh)global.MathSprintHub.refresh();
+ const history=loadHistory();const entry={id:`${Date.now()}-${Math.random().toString(36).slice(2,8)}`,trainer:app.kind,title:app.cfg.title,date:new Date().toISOString(),reason,mode:app.sessionMode,questions:records.length,correct,wrong,unanswered:skipped,accuracy,elapsedMs:elapsed,avgMs:avg,bestStreak:app.bestStreak,records:records.map(r=>({question:r.question,hint:r.hint,userAnswer:r.userAnswer,correctAnswer:r.correctAnswer,status:r.status,elapsedMs:r.elapsedMs,explanation:r.explanation}))};history.push(entry);saveHistory(history);$("progressBar").style.width="100%";$("submitBtn").disabled=false;$("startBtn").textContent="Start sprint →";$("retryWrongBtn").classList.toggle("hidden",!records.some(r=>r.status!=="correct"));renderTrainerHistory(app.kind);if(global.MathSprintHub&&global.MathSprintHub.refresh)global.MathSprintHub.refresh();
 }
 function renderTrainerHistory(kind){const h=loadHistory().filter(x=>x.trainer===kind);const node=$("trainerHistory");if(!node)return;if(!h.length){node.textContent="No completed sessions yet.";return}const sessions=h.length,questions=h.reduce((s,x)=>s+x.questions,0),correct=h.reduce((s,x)=>s+x.correct,0),accuracy=questions?Math.round(correct/questions*100):0;node.textContent=`${sessions} session${sessions===1?"":"s"} · ${questions} questions · ${accuracy}% overall accuracy`}
 global.MathSprint={mount,loadHistory,saveHistory,configs};

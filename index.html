@@ -2,13 +2,17 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#4f46e5"><title>Math Practice Hub · SSC CGL Sprint Training</title>
+<meta name="theme-color" content="#4f46e5">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="shortcut icon" href="assets/favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/favicon-180.png"><title>Math Practice Hub · SSC CGL Sprint Training</title>
 <link rel="stylesheet" href="assets/css/site.css">
 </head>
 <body>
 <header class="site-header home-header"><a class="brand" href="index.html"><span class="brand-mark">∑</span><span>Math Practice Hub<small>SSC CGL · Calculation Sprint</small></span></a><nav><a href="#trainers">Trainers</a><a href="#analytics">My analytics</a><a href="README.md">About</a></nav></header>
 <main class="home-main">
-<section class="hero"><div class="hero-copy"><p class="eyebrow">YOUR DAILY CALCULATION WORKOUT</p><h1>Calculate faster.<br><span>Compete with the clock.</span></h1><p>Eleven focused trainers for number sense, arithmetic speed and the calculation skills used in competitive government exams.</p><div class="hero-actions"><a class="btn primary" href="#trainers">Choose a trainer ↓</a><span class="muted small">No account · Works offline after loading · Local history</span></div></div><div class="hero-art"><div class="hero-number">25²</div><div class="hero-equals">= 625</div><div class="hero-chip">Accuracy × Speed</div></div></section>
+<section class="hero"><div class="hero-copy"><p class="eyebrow">YOUR DAILY CALCULATION WORKOUT</p><h1>Calculate faster.<br><span>Compete with the clock.</span></h1><p>Twelve focused trainers for number sense, arithmetic speed and the reasoning skills used in competitive government exams.</p><div class="hero-actions"><a class="btn primary" href="#trainers">Choose a trainer ↓</a><span class="muted small">No account · Works offline after loading · Local history</span></div></div><div class="hero-art"><div class="hero-number">25²</div><div class="hero-equals">= 625</div><div class="hero-chip">Accuracy × Speed</div></div></section>
 <section class="overview-metrics" id="analytics">
 <div><small>SESSIONS COMPLETED</small><strong id="homeSessions">0</strong></div><div><small>QUESTIONS ANSWERED</small><strong id="homeQuestions">0</strong></div><div><small>OVERALL ACCURACY</small><strong id="homeAccuracy">—</strong></div><div><small>BEST STREAK</small><strong id="homeStreak">0</strong></div>
 </section>
@@ -25,6 +29,7 @@
 <a class="trainer-card" data-search="approximate division estimate quotient" href="trainers/approximate-division/index.html"><span class="card-icon green">≈</span><span class="card-tag">ESTIMATION</span><h3>Approximate division</h3><p>Estimate quotients using rounding and compatible numbers.</p><span class="card-bottom">Start trainer <b>↗</b></span></a>
 <a class="trainer-card" data-search="prime hunt numbers 1 200 sieve" href="trainers/prime-hunt/index.html"><span class="card-icon pink">200</span><span class="card-tag">PRIME NUMBERS</span><h3>Prime hunt: 1–200</h3><p>Identify primes in a grid and review missed primes and false positives.</p><span class="card-bottom">Start trainer <b>↗</b></span></a>
 <a class="trainer-card" data-search="prime or composite factor" href="trainers/prime-or-not/index.html"><span class="card-icon blue">p?</span><span class="card-tag">PRIME NUMBERS</span><h3>Prime or composite?</h3><p>Classify a number and learn a factor that proves compositeness.</p><span class="card-bottom">Start trainer <b>↗</b></span></a>
+<a class="trainer-card" data-search="reasoning alphabet number coding A1 B2 Z26 A27 letter number sequence pattern" href="trainers/alphabet-number-reasoning/index.html"><span class="card-icon violet reasoning-card-icon" aria-hidden="true">↔</span><span class="card-tag">REASONING & CODING</span><h3>Alphabet–number reasoning</h3><p>Practise letter-to-number mapping (A = 1 to Z = 26) and number-to-letter mapping (1–32, including A27 through F32).</p><span class="card-bottom">Start trainer <b>↗</b></span></a>
 </div>
 <section class="history-panel panel"><div><p class="eyebrow">YOUR PRACTICE HISTORY</p><h2>Progress that stays with you</h2><p class="muted">Your browser stores session summaries locally. No account or server is used.</p></div><div id="homeHistory" class="home-history"></div><div class="history-actions"><button id="exportHistory" class="btn secondary">Export history (JSON)</button><button id="clearHistory" class="btn danger-outline">Clear local history</button></div><p class="tiny muted" id="historyMessage" aria-live="polite"></p></section>
 <footer><span>Math Practice Hub</span><span>Made for consistent, focused practice.</span></footer>

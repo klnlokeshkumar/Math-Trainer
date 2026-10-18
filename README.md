@@ -15,8 +15,9 @@ A static, GitHub Pages-ready practice site for SSC CGL and other competitive-exa
 9. Approximate division
 10. Prime hunt (1–200)
 11. Prime or composite
+12. Alphabet–number reasoning (two modes only: letter → number for A–Z = 1–26, and number → letter for 1–32, including 27 = A through 32 = F)
 
-Each trainer has its own `index.html`, `style.css`, and `script.js`. Reusable styles and the session engine live in `assets/` and `shared/`.
+Each trainer has its own `index.html`, `style.css`, and `script.js`. Reusable styles, favicon assets, and the session engine live in `assets/` and `shared/`.
 
 ## Features
 
@@ -31,6 +32,7 @@ Each trainer has its own `index.html`, `style.css`, and `script.js`. Reusable st
 - Browser-local analytics and trainer preferences in `localStorage`; history can be exported as JSON or cleared from the homepage. Preferences stay in the current browser profile and are not synced to other devices.
 - Decimal comparison is numeric, so `0.5`, `0.50` and `0.500` are treated as equal when appropriate. Fraction answers are compared as equivalent simplified fractions.
 - Responsive layout for desktop and mobile.
+- A branded SVG, PNG, ICO, and Apple touch favicon are linked from the homepage and all 12 trainer pages using project-relative paths.
 
 ## Run locally
 
@@ -59,7 +61,11 @@ math-practice-hub/
 ├── .nojekyll
 ├── assets/
 │   ├── css/site.css
-│   └── js/hub.js
+│   ├── js/hub.js
+│   ├── favicon.svg
+│   ├── favicon-32.png
+│   ├── favicon-180.png
+│   └── favicon.ico
 ├── shared/
 │   ├── question-utils.js
 │   └── session-engine.js
@@ -99,8 +105,20 @@ math-practice-hub/
 - [University of Waterloo: Designing multiple-choice questions](https://uwaterloo.ca/centre-for-teaching-excellence/catalogs/tip-sheets/designing-multiple-choice-questions) — recommends alternatives that are plausible and incorrect, and notes the challenge of adding extra useful distractors.
 - [INFORMS Transactions on Education: Practical guidance for writing multiple-choice test questions](https://pubsonline.informs.org/doi/full/10.1287/ited.2022.0274) — describes using numerical error patterns as distractors to reveal likely mistakes.
 
+## Alphabet–number reasoning trainer
+
+- It has exactly two question types: **letter → number** (A = 1 through Z = 26) and **number → letter** (1 = A through 32 = F, so 27 = A, 28 = B, …, 32 = F).
+- It never asks for number values above 32. The letter-to-number mode only expects values from 1 to 26.
+- The universal answer preference applies: typed input accepts a numeric answer or any A–Z letter, and multiple-choice mode provides four choices with one correct answer.
+- Selecting a multiple-choice answer submits immediately; correct and incorrect answers resolve inline and remain visible for one second.
+
 ## v9 interaction and mixed-mode prompt refinements
 
 - Percentage-to-fraction questions use the compact `55% = ?` format. In mixed direction only, an instructional subtitle such as `Fraction in simplest form?` appears beneath the question; the subtitle is about half the question font size.
 - All trainers and sprint modes now reveal the resolved answer inline after a response: correct answers in green; on incorrect answers, the entered answer appears red and struck through followed immediately by the green correct answer. Suffixes such as `%` are included with both values.
 - Correct, incorrect, and question-timeout resolutions stay visible for one second before the next question or timed-session results. Timed-session expiration is deferred during this reveal interval.
+
+### Dropdown persistence and interface consistency
+- The question-category label uses a separate `questionCategory` ID, distinct from trainer setting dropdowns named `questionType`. This prevents the first question render from overwriting a dropdown's options; this also protects the Divisibility Rules trainer.
+- Dynamic trainer settings are accessed through the `#trainerOptions` container first, avoiding accidental collisions with similarly named elements elsewhere in the page.
+- Trainer badges share one responsive style. The alphabet–number trainer uses a letter ↔ number mapping badge consistent with the hub's violet icon system.
