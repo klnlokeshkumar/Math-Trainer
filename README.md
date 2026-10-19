@@ -5,17 +5,18 @@ A static, GitHub Pages-ready practice site for SSC CGL and other competitive-exa
 ## Included trainers
 
 1. Tables 20 × 20 (multiplication/division, custom tables and factor limits)
-2. Two-digit multiplication
-3. Squares and square roots (optional estimates for non-perfect squares, rounded to 1–3 decimal places)
-4. Cubes and cube roots (optional estimates for non-perfect cubes, rounded to 1–3 decimal places)
-5. Fractions to decimals (exact decimals up to two places, or include non-terminating values rounded to two places)
-6. Percentages ↔ fractions
-7. Divisibility rules
-8. Unit digit and last two digits of powers
-9. Approximate division
-10. Prime hunt (1–200)
-11. Prime or composite
-12. Alphabet–number reasoning (two modes only: letter → number for A–Z = 1–26, and number → letter for 1–32, including 27 = A through 32 = F)
+2. Addition (single-digit, two-digit and four-digit sums, with balanced carrying practice)
+3. Two-digit multiplication
+4. Squares and square roots (optional estimates for non-perfect squares, rounded to 1–3 decimal places)
+5. Cubes and cube roots (optional estimates for non-perfect cubes, rounded to 1–3 decimal places)
+6. Fractions to decimals (exact decimals up to two places, or include non-terminating values rounded to two places)
+7. Percentages ↔ fractions
+8. Divisibility rules
+9. Unit digit and last two digits of powers
+10. Approximate division
+11. Prime hunt (1–200)
+12. Prime or composite
+13. Alphabet–number reasoning (two modes only: letter → number for A–Z = 1–26, and number → letter for 1–32, including 27 = A through 32 = F)
 
 Each trainer has its own `index.html`, `style.css`, and `script.js`. Reusable styles, favicon assets, and the session engine live in `assets/` and `shared/`.
 
@@ -32,7 +33,7 @@ Each trainer has its own `index.html`, `style.css`, and `script.js`. Reusable st
 - Browser-local analytics and trainer preferences in `localStorage`; history can be exported as JSON or cleared from the homepage. Preferences stay in the current browser profile and are not synced to other devices.
 - Decimal comparison is numeric, so `0.5`, `0.50` and `0.500` are treated as equal when appropriate. Fraction answers are compared as equivalent simplified fractions.
 - Responsive layout for desktop and mobile.
-- A branded SVG, PNG, ICO, and Apple touch favicon are linked from the homepage and all 12 trainer pages using project-relative paths.
+- A branded SVG, PNG, ICO, and Apple touch favicon are linked from the homepage and all 13 trainer pages using project-relative paths.
 
 ## Run locally
 
@@ -122,3 +123,10 @@ math-practice-hub/
 - The question-category label uses a separate `questionCategory` ID, distinct from trainer setting dropdowns named `questionType`. This prevents the first question render from overwriting a dropdown's options; this also protects the Divisibility Rules trainer.
 - Dynamic trainer settings are accessed through the `#trainerOptions` container first, avoiding accidental collisions with similarly named elements elsewhere in the page.
 - Trainer badges share one responsive style. The alphabet–number trainer uses a letter ↔ number mapping badge consistent with the hub's violet icon system.
+
+## Addition trainer
+
+- Three question ranges: **single-digit** (0–9 + 0–9), **two-digit** (10–99 + 10–99), and **four-digit** (1,000–9,999 + 1,000–9,999).
+- Single- and two-digit modes use every unique unordered operand pair in the selected range. The four-digit mode uses a finite, unique sample of 1,200 pairs balanced across 0–4 carry columns; generating every four-digit pair would mean over 40 million questions and is not practical for an individual sprint.
+- Multiple-choice distractors are based on likely addition mistakes: omitted carries, misread place values, subtraction instead of addition, and nearby carry-related totals. Every option is checked against the valid sum range and duplicate answers are removed.
+- Difficulty levels use carry count for two- and four-digit addition; the single-digit level uses the size of the sum. Fixed-length numeric answers can auto-submit under the universal input setting.

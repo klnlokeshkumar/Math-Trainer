@@ -10,6 +10,9 @@ const configs={
   {id:"tables",label:"Tables",type:"select",choices:[["all","All tables 1–20"],["custom","Choose tables"]],value:"all"},
   {id:"rangeStart",label:"Factor start",type:"number",min:1,max:1000,value:1},{id:"rangeEnd",label:"Factor end",type:"number",min:1,max:1000,value:20}
  ]},
+ addition:{title:"Addition",kind:"numeric",auto:true,options:[
+  {id:"additionMode",label:"Addition type",type:"select",choices:[["single","Single-digit addition (0–9 + 0–9)"],["two","Two-digit addition (10–99 + 10–99)"],["four","Four-digit addition (1,000–9,999; 1,200-pair sample)"]],value:"single"}
+ ]},
  multiply2:{title:"Two-digit multiplication",kind:"numeric",auto:true,options:[{id:"operandMin",label:"Minimum operand",type:"number",min:10,max:99,value:10},{id:"operandMax",label:"Maximum operand",type:"number",min:10,max:99,value:99}]},
  squares:{title:"Squares and square roots",kind:"numeric",auto:true,options:[
   {id:"maxRoot",label:"Maximum root",type:"number",min:5,max:100,value:50},
@@ -49,7 +52,7 @@ function optionElement(id){
 function optionValue(id){const el=optionElement(id);return el?el.value:null}
 function setStoredControl(id,value){const el=optionElement(id);if(!el||value===undefined||value===null||value==="")return;if(el.tagName==="SELECT"){if([...el.options].some(o=>o.value===String(value)))el.value=String(value);return;}if(el.type==="number"){const n=Number(value),min=el.min===""?-Infinity:Number(el.min),max=el.max===""?Infinity:Number(el.max);if(Number.isFinite(n)&&n>=min&&n<=max)el.value=String(value);return;}el.value=String(value)}
 function loadSharedPrefs(){return readStoredObject(SHARED_PREFS_KEY)}
-function applySharedPrefs(kind){const prefs=loadSharedPrefs();if(!Object.prototype.hasOwnProperty.call(prefs,"answerMode")){const defaults={table:"input",multiply2:"input",squares:"input",cubes:"input",fracdec:"input",percent:"input",divisibility:"options",lastdigits:"input",approxdiv:"options",primehunt:"options",primetest:"options",alphabetreasoning:"input"};setStoredControl("answerMode",defaults[kind]||"input");}["answerMode","difficulty","sessionMode","questionCount","duration","perQuestion"].forEach(id=>setStoredControl(id,prefs[id]));}
+function applySharedPrefs(kind){const prefs=loadSharedPrefs();if(!Object.prototype.hasOwnProperty.call(prefs,"answerMode")){const defaults={table:"input",addition:"input",multiply2:"input",squares:"input",cubes:"input",fracdec:"input",percent:"input",divisibility:"options",lastdigits:"input",approxdiv:"options",primehunt:"options",primetest:"options",alphabetreasoning:"input"};setStoredControl("answerMode",defaults[kind]||"input");}["answerMode","difficulty","sessionMode","questionCount","duration","perQuestion"].forEach(id=>setStoredControl(id,prefs[id]));}
 function saveSharedPrefs(){const prefs=loadSharedPrefs();["answerMode","difficulty","sessionMode","questionCount","duration","perQuestion"].forEach(id=>{const el=$(id);if(el&&el.value!=="")prefs[id]=el.value;});if(optionElement("rootMode"))prefs.rootMode=optionElement("rootMode").value;if(optionElement("rootPrecision"))prefs.rootPrecision=optionElement("rootPrecision").value;if(app&&(app.kind==="squares"||app.kind==="cubes")&&optionElement("direction")){const direction=optionElement("direction").value;prefs.rootQuestionType=direction==="mixed"?"mixed":direction==="root"?"root":"power";}writeStoredObject(SHARED_PREFS_KEY,prefs)}
 function loadTrainerPrefs(){return readStoredObject(TRAINER_PREFS_KEY)}
 function saveTrainerPrefs(kind){const all=loadTrainerPrefs(),prefs={...(all[kind]||{})};(configs[kind]?.options||[]).forEach(o=>{const el=optionElement(o.id);if(el&&el.value!=="")prefs[o.id]=el.value;});if(kind==="table"&&$("tableChecks"))prefs.selectedTables=[...$("tableChecks").querySelectorAll("input:checked")].map(el=>+el.value);all[kind]=prefs;writeStoredObject(TRAINER_PREFS_KEY,all)}
@@ -74,6 +77,25 @@ function qPool(kind,difficulty,opts){
   const op=opts.operation, tables=opts.selectedTables;if(opts.tables==="custom"&&!tables.length)throw new Error("Select at least one table.");
   tables.forEach(t=>{for(let n=start;n<=end;n++){if(op!=="divide")add(`${t} × ${n} = ?`,t*n,{explain:`${t} × ${n} = ${t*n}`});if(op!=="multiply")add(`${t*n} ÷ ${t} = ?`,n,{explain:`${t*n} ÷ ${t} = ${n}`})}});
   if(op==="mixed"){} // The pool includes both operations when mixed.
+ } else if(kind==="addition"){
+  const mode=opts.additionMode||"single";
+  const countCarries=(left,right)=>{let a=left,b=right,carry=0,count=0;while(a>0||b>0){const column=(a%10)+(b%10)+carry;carry=column>=10?1:0;if(carry)count++;a=Math.floor(a/10);b=Math.floor(b/10)}return count};
+  const levelFor=(digits,carries,sum)=>digits===1?(sum<=8?"easy":sum<=13?"medium":"hard"):digits===2?(carries===0?"easy":carries===1?"medium":"hard"):(carries===0?"easy":carries<=2?"medium":"hard");
+  const addPair=(a,b,digits)=>{if(a>b)[a,b]=[b,a];const answer=a+b,carries=countCarries(a,b),level=levelFor(digits,carries,answer);add(`${a} + ${b} = ?`,answer,{level,additionA:a,additionB:b,additionDigits:digits,carryCount:carries,explain:`${a} + ${b} = ${answer}.${carries?` ${carries===1?"1 carry":`${carries} carries`} in the column addition.`:" No carrying is needed."}`})};
+  if(mode==="single"){
+   for(let a=0;a<=9;a++)for(let b=a;b<=9;b++)addPair(a,b,1);
+  }else if(mode==="two"){
+   for(let a=10;a<=99;a++)for(let b=a;b<=99;b++)addPair(a,b,2);
+  }else{
+   // Four-digit pairs have 40.5 million unordered possibilities. Provide a large,
+   // balanced unique sample for practical sprints, stratified by carry count.
+   const quotas={0:150,1:300,2:350,3:300,4:100},seen=new Set();let attempts=0;
+   for(const [carryKey,target] of Object.entries(quotas)){
+    let made=0,carryType=Number(carryKey);
+    while(made<target&&attempts<500000){attempts++;let a=rand(1000,9999),b=rand(1000,9999);if(a>b)[a,b]=[b,a];const key=`${a},${b}`;if(seen.has(key)||countCarries(a,b)!==carryType)continue;seen.add(key);addPair(a,b,4);made++;}
+   }
+   if(q.length!==1200)throw new Error("Could not build the full balanced four-digit addition pool. Please retry the sprint.");
+  }
  } else if(kind==="multiply2"){
   let lo=intOpt("operandMin",10,10,99),hi=intOpt("operandMax",99,10,99);if(lo>hi)throw new Error("Minimum operand must not exceed maximum operand.");
   const span=hi-lo+1;for(let a=lo;a<=hi;a++)for(let b=a;b<=hi;b++)add(`${a} × ${b} = ?`,a*b,{explain:`${a} × ${b} = ${a*b}`});
@@ -142,7 +164,7 @@ function qPool(kind,difficulty,opts){
   }
  }
  // difficulty filters keep a meaningful finite pool; progressive is mixed and uses all levels.
- const tagged=q.map((item,i)=>({...item,level:kind==="multiply2"?(Math.max(...item.text.match(/\d+/g).map(Number))<35?"easy":Math.max(...item.text.match(/\d+/g).map(Number))<70?"medium":"hard"):i%3===0?"easy":i%3===1?"medium":"hard"}));
+ const tagged=q.map((item,i)=>({...item,level:item.level||(kind==="multiply2"?(Math.max(...item.text.match(/\d+/g).map(Number))<35?"easy":Math.max(...item.text.match(/\d+/g).map(Number))<70?"medium":"hard"):i%3===0?"easy":i%3===1?"medium":"hard")}));
  let filtered=tagged;
  if(difficulty==="easy")filtered=tagged.filter(x=>x.level==="easy");
  if(difficulty==="medium")filtered=tagged.filter(x=>x.level==="medium");
@@ -181,6 +203,10 @@ function generatedOptions(q){
   return String(Number(n.toFixed(2)));
  };
  const rootMatch=text.match(/[√∛]\s*(\d+)\s*=\s*\?/);
+ const addMatch=trainer==="addition"?text.match(/^\s*(\d+)\s*\+\s*(\d+)\s*=\s*\?/):null;
+ const additionOperands=addMatch?[Number(addMatch[1]),Number(addMatch[2])]:null;
+ const additionMin=additionOperands?(additionOperands[0]<=9?0:additionOperands[0]<=99?20:2000):null;
+ const additionMax=additionOperands?(additionOperands[0]<=9?18:additionOperands[0]<=99?198:19998):null;
  const multMatch=text.match(/(\d+)\s*×\s*(\d+)\s*=\s*\?/);
  const divMatch=text.match(/(\d+)\s*÷\s*(\d+)\s*=\s*\?/);
  const squareMatch=text.match(/(\d+)\s*²\s*=\s*\?/);
@@ -231,6 +257,18 @@ function generatedOptions(q){
  // Plain fractions: one-number changes, numerator/denominator reversal and denominator scaling errors.
  else if(q.kind==="fraction"){
   const f=U.normFraction(correct);if(f){pushGroup(asFraction(f.d,f.n));pushGroup(asFraction(f.n+1,f.d),asFraction(Math.max(0,f.n-1),f.d));pushGroup(asFraction(f.n,f.d+1),asFraction(f.n,Math.max(1,f.d-1)));pushGroup(asFraction(f.n*2,f.d),asFraction(f.n,f.d*2));}
+ }
+ // Addition: no-carry totals, omitted carry columns, misaligned place values, and subtraction instead of addition.
+ else if(addMatch){
+  const a=additionOperands[0],b=additionOperands[1],answer=Number(correct);let x=a,y=b,pos=0,carry=0,noCarry=0;const carryPlaces=[];
+  while(x>0||y>0){const da=x%10,db=y%10,column=da+db;noCarry+=(column%10)*(10**pos);const withCarry=column+carry;carry=withCarry>=10?1:0;if(carry)carryPlaces.push(10**(pos+1));x=Math.floor(x/10);y=Math.floor(y/10);pos++;}
+  pushGroup(noCarry,Math.abs(a-b));
+  pushGroup(...carryPlaces.map(place=>answer-place));
+  pushGroup(...carryPlaces.map(place=>answer+place));
+  // Forgetting one addend is a more plausible distractor than randomly reversing both operands.
+  pushGroup(Math.max(a,b),Math.min(a,b),Math.abs(a-b));
+  const step=additionOperands[0]<=9?1:additionOperands[0]<=99?10:100;
+  pushGroup(answer-step,answer+step,answer-2*step,answer+2*step);
  }
  // Squares: neighbouring square numbers and the classic error of doubling instead of squaring.
  else if(squareMatch){
@@ -286,7 +324,7 @@ function generatedOptions(q){
  }
 
  const values=[];
- const push=v=>{const textValue=fmt(v);if(textValue===null||!String(textValue).trim())return;if(q.kind!=="last2"&&Number(textValue)<0&&Number(correct)>=0&&!exactSquareRoot)return;if(q.kind!=="last2"&&trainer!=="lastdigits"&&Number(textValue)===0&&Number(correct)>0&&!exactSquareRoot)return;if(values.some(existing=>choiceEquivalent(q,existing,textValue)))return;values.push(textValue)};
+ const push=v=>{const textValue=fmt(v);if(textValue===null||!String(textValue).trim())return;if(additionOperands&&(Number(textValue)<additionMin||Number(textValue)>additionMax))return;if(q.kind!=="last2"&&Number(textValue)<0&&Number(correct)>=0&&!exactSquareRoot)return;if(q.kind!=="last2"&&trainer!=="lastdigits"&&Number(textValue)===0&&Number(correct)>0&&!exactSquareRoot)return;if(values.some(existing=>choiceEquivalent(q,existing,textValue)))return;values.push(textValue)};
  push(correct);
  // One representative from each misconception family creates varied, interpretable distractors.
  for(const group of groups){if(values.length>=4)break;for(const candidate of U.shuffle(group)){const before=values.length;push(candidate);if(values.length>before)break;}}
