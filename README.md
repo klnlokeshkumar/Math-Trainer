@@ -10,7 +10,7 @@ A static, GitHub Pages-ready practice site for SSC CGL and other competitive-exa
 4. Squares and square roots (optional estimates for non-perfect squares, rounded to 1–3 decimal places)
 5. Cubes and cube roots (optional estimates for non-perfect cubes, rounded to 1–3 decimal places)
 6. Fractions to decimals (exact decimals up to two places, or include non-terminating values rounded to two places)
-7. Percentages ↔ fractions
+7. Percentages ↔ fractions (general conversions plus an SSC CGL key-fraction set in both directions)
 8. Divisibility rules
 9. Unit digit and last two digits of powers
 10. Approximate division
@@ -91,6 +91,12 @@ math-practice-hub/
 - Typed Yes/No and Prime/Composite questions auto-submit when a complete valid answer token is entered. Multiple-select questions and free-form fraction answers keep explicit submission because the system cannot know when a list or fraction is finished. The Enter key remains available as a fallback when a learner wants to submit an answer before reaching the automatic completion boundary.
 - The Check answer button is hidden only for answer formats with a defined auto-submit rule; it stays visible for multi-select and free-form fraction questions.
 
+### SSC CGL key-fraction practice
+- The Percentages ↔ fractions trainer has an additional **SSC CGL key fractions (both directions)** practice type alongside the general mixed set and the one-direction modes.
+- The curated set follows the attached notes: 1, 1/2, 1/3, 2/3, 1/4, 3/4, the selected fifths through tenths, the listed elevenths, and the note's special 1/12, 1/13, 1/14, 1/15 and 1/16 conversions.
+- Each selected mapping is practised as both `percentage = ?` (fraction in simplest form) and `fraction = ?%` (exact percentage, using mixed-number notation when needed). In options mode, choices are taken from the curated set and shuffled.
+- When typed input is selected, percentage values such as `14 2/7` are accepted as exact rational values; equivalent improper fractions such as `100/7` are also accepted. Decimal approximations are not accepted for repeating values, so the drill reinforces the exact memorized conversion.
+
 ### Multiple-choice behavior and answer reveal
 - Single-answer multiple-choice questions submit as soon as an option is selected; the Check answer button is hidden for these questions.
 - The resolved answer is inserted into the question line for every trainer and answer format: correct answers are green; incorrect responses show the submitted answer in red with strikethrough, followed by the green correct answer. Single-choice selections are also highlighted, and select-all questions retain a Check answer button.
@@ -98,7 +104,7 @@ math-practice-hub/
 - Numeric distractors are generated from skill-specific error patterns rather than a universal list of arbitrary offsets. The option order is shuffled, choices are deduplicated using the same equivalence rules as grading, and exactly one choice is correct for single-answer items.
 - Tables and multiplication use adjacent-factor mistakes; squares and cubes use nearby powers plus common operation confusions; approximate roots and decimals use rounding/place-value errors; fractions and percentages use scale, reciprocal, numerator/denominator and early-rounding errors; powers' last digits use exponent and modulo mistakes; approximate division uses rounding-direction and divisor-estimation mistakes.
 - Divisibility and prime/composite items remain Yes/No because they have two meaningful categories. Prime hunt remains a select-all item with the full candidate set. These are not forced into four choices by adding low-quality alternatives.
-- Percentage-to-fraction questions are generated only when the displayed percentage is exact at its shown precision. Repeating percentages are reserved for fraction-to-percentage questions with an explicit four-decimal rounding note, avoiding a rounded prompt with a mismatched exact fraction answer.
+- Percentage-to-fraction questions in the general set are generated only when the displayed percentage is exact at its shown precision. The dedicated SSC CGL key-fraction mode uses the exact conversions transcribed from the learner-provided five-page notes, including mixed-number percentages such as 14 2/7% = 1/7. It asks every included conversion in both directions and uses only that curated mapping set for distractors; no hidden rounding is applied.
 - The distractors are heuristic, curriculum-informed models of plausible errors, not empirically calibrated against response data from individual learners.
 
 ### Distractor-design references

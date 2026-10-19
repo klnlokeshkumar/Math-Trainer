@@ -27,7 +27,7 @@ const configs={
   {id:"rootPrecision",label:"Round approximate roots to",type:"select",choices:[["1","1 decimal place"],["2","2 decimal places"],["3","3 decimal places"]],value:"2",showWhen:[{id:"direction",notValue:"cube"},{id:"rootMode",value:"approx"}]}
  ]},
  fracdec:{title:"Fractions to decimals",kind:"decimal",auto:false,options:[{id:"precision",label:"Decimal mode",type:"select",choices:[["exact","Exact decimals (up to 2 places)"],["round","Include approximations (round to 2 places)"]],value:"exact"},{id:"fractionDifficulty",label:"Fraction set",type:"select",choices:[["common","Common fractions"],["wide","Wider fractions"]],value:"common"}]},
- percent:{title:"Percentages ↔ fractions",kind:"mixed",auto:false,options:[{id:"direction",label:"Direction",type:"select",choices:[["mixed","Mixed"],["toFraction","Percent → fraction"],["toPercent","Fraction → percent"]],value:"mixed"}]},
+ percent:{title:"Percentages ↔ fractions",kind:"mixed",auto:false,options:[{id:"direction",label:"Practice type",type:"select",choices:[["mixed","Mixed conversions (general set)"],["toFraction","Percent → fraction"],["toPercent","Fraction → percent"],["sscCgl","SSC CGL key fractions (both directions)"]],value:"mixed"}]},
  divisibility:{title:"Divisibility rules",kind:"choice",auto:false,options:[{id:"divisorSet",label:"Rule set",type:"select",choices:[["core","Core: 2, 3, 5, 9, 10"],["full","Full: 2,3,4,5,6,8,9,10,11,12,25"]],value:"full"},{id:"questionType",label:"Question type",type:"select",choices:[["yesno","Divisible? Yes / no"],["multiple","Which rules apply? (select all)"]],value:"yesno"}]},
  lastdigits:{title:"Unit and last two digits",kind:"numeric",auto:true,options:[{id:"digits",label:"Find",type:"select",choices:[["1","Unit digit"],["2","Last two digits"],["mixed","Mixed"],["product","Product of powers (unit digit)"]],value:"mixed"},{id:"baseMax",label:"Maximum base",type:"number",min:2,max:99,value:30}]},
  approxdiv:{title:"Approximate division",kind:"choice",auto:false,options:[{id:"precision",label:"Estimate to",type:"select",choices:[["integer","Nearest integer"],["tenth","Nearest tenth"]],value:"integer"},{id:"divisorMax",label:"Maximum divisor",type:"number",min:10,max:500,value:99}]},
@@ -113,8 +113,43 @@ function qPool(kind,difficulty,opts){
   const arr=opts.fractionDifficulty==="wide"?wide:common;const mode=opts.precision;
   arr.forEach(([n,d])=>{const val=n/d;const answer=mode==="round"?(Math.round((val+Number.EPSILON)*100)/100).toFixed(2):String(Number(val.toFixed(2)));if(mode==="exact"&&Math.abs(val-Math.round(val*100)/100)>1e-9)return;const prompt=`${n}/${d} = ?`;const hint=mode==="round"?"(2 Decimals)":"(Exact Decimal)";const expanded=val.toFixed(6).replace(/0+$/,"").replace(/\.$/,"");add(prompt,answer,{kind:"decimal",hint,explain:`${n} ÷ ${d} = ${expanded}${mode==="round"?`; rounded to 2 decimal places: ${answer}`:""}.`})});
  } else if(kind==="percent"){
-  const dir=opts.direction;const fracs=[[1,2],[1,3],[1,4],[1,5],[1,6],[1,8],[1,10],[1,12],[1,16],[3,4],[2,5],[3,5],[7,8],[3,8],[5,8],[7,20],[9,20],[11,20],[13,20],[17,20],[1,25],[3,25],[7,25],[9,25]];
-  fracs.forEach(([n,d])=>{const s=U.simplify(n,d),pct=n/d*100,shownPct=Number(pct.toFixed(4)),hasExactDisplay=Math.abs(pct-shownPct)<1e-9;if(dir!=="toPercent"&&hasExactDisplay)add(`${shownPct}% = ?`,s.text,{kind:"fraction",instruction:dir==="mixed"?"Fraction in simplest form?":"",explain:`${shownPct}% = ${shownPct}/100 = ${s.text}`});if(dir!=="toFraction")add(`${s.text} = ?%`,shownPct,{kind:"decimal",hint:hasExactDisplay?"":"(Round to 4 Decimals)",explain:`${s.text} × 100 = ${pct.toFixed(6).replace(/0+$/,'').replace(/\.$/,'')}%; ${hasExactDisplay?"":"rounded to 4 decimal places: "+shownPct}`})});
+  const dir=opts.direction;
+  if(dir==="sscCgl"){
+   // Exact conversion set transcribed from the user's SSC CGL percentage-conversion notes.
+   // Each entry is a simplified fraction and its exact percentage, expressed as a mixed
+   // number where the source uses one (not a rounded decimal).
+   const items=[
+    {n:1,d:1,p:"100"},{n:1,d:2,p:"50"},{n:1,d:3,p:"33 1/3"},{n:2,d:3,p:"66 2/3"},
+    {n:1,d:4,p:"25"},{n:3,d:4,p:"75"},
+    {n:1,d:5,p:"20"},{n:2,d:5,p:"40"},{n:3,d:5,p:"60"},{n:4,d:5,p:"80"},
+    {n:1,d:6,p:"16 2/3"},{n:5,d:6,p:"83 1/3"},
+    {n:1,d:7,p:"14 2/7"},{n:2,d:7,p:"28 4/7"},{n:3,d:7,p:"42 6/7"},{n:4,d:7,p:"57 1/7"},{n:5,d:7,p:"71 3/7"},{n:6,d:7,p:"85 5/7"},
+    {n:1,d:8,p:"12 1/2"},{n:3,d:8,p:"37 1/2"},{n:5,d:8,p:"62 1/2"},{n:7,d:8,p:"87 1/2"},
+    {n:1,d:9,p:"11 1/9"},{n:2,d:9,p:"22 2/9"},{n:4,d:9,p:"44 4/9"},{n:5,d:9,p:"55 5/9"},{n:7,d:9,p:"77 7/9"},{n:8,d:9,p:"88 8/9"},
+    {n:1,d:10,p:"10"},{n:3,d:10,p:"30"},{n:7,d:10,p:"70"},{n:9,d:10,p:"90"},
+    {n:1,d:11,p:"9 1/11"},{n:2,d:11,p:"18 2/11"},{n:3,d:11,p:"27 3/11"},{n:4,d:11,p:"36 4/11"},{n:5,d:11,p:"45 5/11"},{n:6,d:11,p:"54 6/11"},{n:7,d:11,p:"63 7/11"},{n:8,d:11,p:"72 8/11"},{n:9,d:11,p:"81 9/11"},{n:10,d:11,p:"90 10/11"},
+    {n:1,d:12,p:"8 1/3"},{n:1,d:13,p:"7 9/13"},{n:1,d:14,p:"7 1/7"},{n:1,d:15,p:"6 2/3"},{n:1,d:16,p:"6 1/4"}
+   ];
+   const fractionText=x=>x.n===x.d?"1":`${x.n}/${x.d}`;
+   const percentValue=x=>x.n/x.d*100;
+   const nearItems=(item,mode)=>items.filter(x=>x.n!==item.n||x.d!==item.d).sort((a,b)=>{
+    const da=Math.abs((mode==="fraction"?a.n/a.d:percentValue(a))-(mode==="fraction"?item.n/item.d:percentValue(item)));
+    const db=Math.abs((mode==="fraction"?b.n/b.d:percentValue(b))-(mode==="fraction"?item.n/item.d:percentValue(item)));
+    // Prefer neighbouring numerators with the same denominator when distractor distances tie.
+    const sa=da-(mode==="fraction"&&a.d===item.d?0.0001:0),sb=db-(mode==="fraction"&&b.d===item.d?0.0001:0);
+    return sa-sb;
+   }).slice(0,3);
+   items.forEach(item=>{
+    const f=fractionText(item),fracChoices=[f,...nearItems(item,"fraction").map(fractionText)];
+    const pctChoices=[item.p,...nearItems(item,"percent").map(x=>x.p)];
+    const fractionValue=item.n/item.d;
+    add(`${item.p}% = ?`,f,{kind:"fractionAnswer",options:fracChoices,instruction:"Fraction in simplest form?",explain:`${item.p}% = ${item.p}/100 = ${f}.`});
+    add(`${f} = ?%`,item.p,{kind:"percentExact",options:pctChoices,instruction:"Exact percentage (mixed number if needed).",explain:`${f} × 100 = ${item.p}%.`});
+   });
+  }else{
+   const fracs=[[1,2],[1,3],[1,4],[1,5],[1,6],[1,8],[1,10],[1,12],[1,16],[3,4],[2,5],[3,5],[7,8],[3,8],[5,8],[7,20],[9,20],[11,20],[13,20],[17,20],[1,25],[3,25],[7,25],[9,25]];
+   fracs.forEach(([n,d])=>{const s=U.simplify(n,d),pct=n/d*100,shownPct=Number(pct.toFixed(4)),hasExactDisplay=Math.abs(pct-shownPct)<1e-9;if(dir!=="toPercent"&&hasExactDisplay)add(`${shownPct}% = ?`,s.text,{kind:"fraction",instruction:dir==="mixed"?"Fraction in simplest form?":"",explain:`${shownPct}% = ${shownPct}/100 = ${s.text}`});if(dir!=="toFraction")add(`${s.text} = ?%`,shownPct,{kind:"decimal",hint:hasExactDisplay?"":"(Round to 4 Decimals)",explain:`${s.text} × 100 = ${pct.toFixed(6).replace(/0+$/,'').replace(/\.$/,'')}%; ${hasExactDisplay?"":"rounded to 4 decimal places: "+shownPct}`})});
+  }
  } else if(kind==="divisibility"){
   const ds=opts.divisorSet==="core"?[2,3,5,9,10]:[2,3,4,5,6,8,9,10,11,12,25];const type=opts.questionType;
   for(let n=100;n<=9999;n+=rand(1,7)){const d=ds[rand(0,ds.length-1)],yes=n%d===0;if(type==="multiple"){const valid=divRules(n).filter(x=>ds.includes(x));add(`Select all rules that divide ${n}`,valid.join(","),{kind:"multi",options:ds.map(String),explain:`Divisors in this rule set: ${valid.join(", ")||"none"}`})}else add(`Is ${n} divisible by ${d}?`,yes?"Yes":"No",{kind:"choice",options:["Yes","No"],explain:yes?`${n} ÷ ${d} is an integer.`:`${n} is not divisible by ${d}.`})}
@@ -177,6 +212,7 @@ function qPool(kind,difficulty,opts){
 function choiceEquivalent(q,a,b){
  const x=String(a).trim(),y=String(b).trim();
  if(q.kind==="fraction")return U.equivalentFraction(x,y);
+ if(q.kind==="fractionAnswer"||q.kind==="percentExact")return equalExactRational(x,y);
  if(q.kind==="decimal")return U.sameDecimal(x,y);
  if(q.kind==="last2")return Number(x)===Number(y);
  if(q.kind==="choice")return x.toLowerCase()===y.toLowerCase();
@@ -350,6 +386,7 @@ function createAutoInputPlan(q){
  if(!q||$("answerMode")?.value==="options"||q.kind==="multi"||q.kind==="fraction")return null;
  const answer=String(q.answer??"").trim(),trainer=q.trainer||app?.kind||"";
  const numeric=/^-?\d+(?:\.\d+)?$/.test(answer);
+ if((q.kind==="fractionAnswer"||q.kind==="percentExact")&&/^\d+$/.test(answer))return {type:"token",tokens:[answer.toLowerCase()],label:"complete whole-number answer"};
  if(q.kind==="last2")return {type:"digits",count:2,label:"two digits"};
  if(q.kind==="numeric"&&app?.cfg?.auto&&/^-?\d+$/.test(answer)){
   if(trainer==="lastdigits"&&/unit digit/i.test(String(q.text||"")))return {type:"digits",count:1,label:"one digit"};
@@ -401,8 +438,8 @@ function inputFor(q){
   }
  }else{
   const numericAnswer=/^-?\d+(?:\.\d+)?$/.test(String(q.answer??""));
-  const placeholder=q.trainer==="alphabetreasoning"?(numericAnswer?"Enter number (1–26)":"Enter letter (A–Z)"):q.kind==="fraction"?"e.g. 3/8":q.kind==="multi"?"e.g. 2, 3, 5":q.kind==="decimal"?"Enter decimal":q.kind==="choice"?(numericAnswer?"Enter estimate":"Type your answer"):"Your answer";
-  const inputMode=q.trainer==="alphabetreasoning"?(numericAnswer?"numeric":"text"):(q.kind==="fraction"||q.kind==="multi"||(q.kind==="choice"&&!numericAnswer))?"text":"decimal";
+  const placeholder=q.trainer==="alphabetreasoning"?(numericAnswer?"Enter number (1–26)":"Enter letter (A–Z)"):q.kind==="fraction"?"e.g. 3/8":q.kind==="fractionAnswer"?"e.g. 3/8 or 1":q.kind==="percentExact"?"e.g. 14 2/7":q.kind==="multi"?"e.g. 2, 3, 5":q.kind==="decimal"?"Enter decimal":q.kind==="choice"?(numericAnswer?"Enter estimate":"Type your answer"):"Your answer";
+  const inputMode=q.trainer==="alphabetreasoning"?(numericAnswer?"numeric":"text"):(q.kind==="fraction"||q.kind==="fractionAnswer"||q.kind==="percentExact"||q.kind==="multi"||(q.kind==="choice"&&!numericAnswer))?"text":"decimal";
   host.innerHTML=`${q.kind==="multi"?'<p class="muted tiny">Enter all answers separated by commas (or leave blank if none apply).</p>':""}<input id="answerInput" class="answer-input" type="text" inputmode="${inputMode}" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${U.esc(placeholder)}" aria-label="Your answer">`;
  }
  const input=$("answerInput");if(input&&input.type!=="hidden"){input.addEventListener("input",()=>{if(app?.locked)return;if(autoInputIsComplete(q,q.autoInputPlan,input.value))submitCurrent()});input.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();submitCurrent()}});if(q.autoInputPlan)input.dataset.autosubmit=q.autoInputPlan.type;input.focus({preventScroll:true})}
@@ -417,7 +454,8 @@ function renderResolvedQuestion(q, shownAnswer, isCorrect, isTimeout=false){
  const equationPlaceholder=idx>=0&&/=\s*$/.test(before);
  const inlinePlaceholder=idx>=0&&q.inlineAnswer===true;
  const addAnswer=(value,className,del=false)=>{const span=document.createElement("span");span.className=className;span.textContent=String(value);if(del)span.style.textDecoration="line-through";node.appendChild(span)};
- const wrongValue=String(shownAnswer??"").trim()||"No answer";
+ let wrongValue=String(shownAnswer??"").trim()||"No answer";
+ if(after.trim().startsWith("%"))wrongValue=wrongValue.replace(/\s*%$/,"");
  if(equationPlaceholder){
   node.appendChild(document.createTextNode(before));
   if(!isCorrect&&!isTimeout){addAnswer(wrongValue+after,"answer-reveal-bad",true);node.appendChild(document.createTextNode(" "));}
@@ -434,9 +472,24 @@ function renderResolvedQuestion(q, shownAnswer, isCorrect, isTimeout=false){
   addAnswer(String(q.answer??"").trim()||"None","answer-reveal-good");
  }
 }
+function parseExactRational(value){
+ const input=String(value??"").trim().replace(/,/g,"").replace(/%\s*$/," ").trim();
+ if(!input)return null;
+ const mixed=input.match(/^([+-]?\d+)\s+(\d+)\s*\/\s*(\d+)$/);
+ if(mixed){const whole=Number(mixed[1]),num=Number(mixed[2]),den=Number(mixed[3]);if(!Number.isInteger(whole)||!Number.isInteger(num)||!Number.isInteger(den)||den===0||num<0)return null;const sign=String(mixed[1]).startsWith("-")?-1:1;return normalizeRational(whole*den+sign*num,den)}
+ const fraction=input.match(/^([+-]?\d+)\s*\/\s*([+-]?\d+)$/);
+ if(fraction){const num=Number(fraction[1]),den=Number(fraction[2]);if(!Number.isInteger(num)||!Number.isInteger(den)||den===0)return null;return normalizeRational(num,den)}
+ const decimal=input.match(/^([+-]?\d+)(?:\.(\d+))?$/);
+ if(decimal){const decimals=decimal[2]||"",den=10**decimals.length,sign=String(decimal[1]).startsWith("-")?-1:1,whole=Math.abs(Number(decimal[1]));return normalizeRational(sign*(whole*den+Number(decimals||0)),den)}
+ return null;
+}
+function normalizeRational(n,d){if(!Number.isFinite(n)||!Number.isFinite(d)||d===0)return null;if(d<0){n=-n;d=-d}const gcd=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){const t=a%b;a=b;b=t}return a||1};const g=gcd(n,d);return {n:n/g,d:d/g}}
+function equalExactRational(a,b){const x=parseExactRational(a),y=parseExactRational(b);return !!x&&!!y&&x.n===y.n&&x.d===y.d}
 function compareAnswer(q,raw){
  if(q.kind==="multi"){const normalize=value=>String(value||"").trim().toLowerCase()==="none"?[]:String(value||"").split(/[,;\s]+/).filter(Boolean).map(v=>v.trim()).sort((a,b)=>Number(a)-Number(b));const a=normalize(raw),e=normalize(q.answer);return a.length===e.length&&a.every((v,i)=>v===e[i])}
  if(q.kind==="fraction")return U.equivalentFraction(raw,q.answer);
+ if(q.kind==="fractionAnswer")return equalExactRational(raw,q.answer);
+ if(q.kind==="percentExact")return equalExactRational(raw,q.answer);
  if(q.kind==="decimal")return U.sameDecimal(raw,q.answer);
  if(q.kind==="last2"){const normalize=value=>{const text=String(value).trim();return /^\d+$/.test(text)?String(Number(text)):text.replace(/^0+(?=\d)/,"")};return normalize(raw)===normalize(q.answer)}
  if(q.kind==="choice"){
